@@ -1,0 +1,6 @@
+# zips
+*.zip
+
+# emacs
+*.ss~
+*.ss\#
