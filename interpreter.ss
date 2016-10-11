@@ -5,6 +5,10 @@
     ; later we may add things that are not expressions.
     (eval-exp form)))
 
+(define contains
+  (lambda (ls val)
+    (find (lambda (x) (eqv? x val)) ls)))
+
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
@@ -21,6 +25,11 @@
         (let ([proc-value (eval-exp rator)]
               [args (eval-rands rands)])
           (apply-proc proc-value args))]
+      [if-exp (con thn els)
+        (if (eval-exp con)
+          (eval-exp thn)
+          (if (not (null? els))
+            (eval-exp els)))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -42,7 +51,20 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define add1
+  (lambda (x)
+    (+ x 1)))
+(define sub1
+  (lambda (x)
+    (- x 1)))
+(define =
+  (lambda (x y)
+    (eqv? x y)))
+
+(define *prim-proc-names* '(+ - * / add1 sub1 cons = zero? not < > <= >= != car cdr list null?
+  assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector
+  vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr
+  caaar caadr cadar caddr cdaar cdadr cddar cdddr))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -56,14 +78,9 @@
 
 (define apply-prim-proc
   (lambda (prim-proc args)
-    (case prim-proc
-      [(+) (+ (1st args) (2nd args))]
-      [(-) (- (1st args) (2nd args))]
-      [(*) (* (1st args) (2nd args))]
-      [(add1) (+ (1st args) 1)]
-      [(sub1) (- (1st args) 1)]
-      [(cons) (cons (1st args) (2nd args))]
-      [(=) (= (1st args) (2nd args))]
+    (cond prim-proc
+      [(contains *prim-proc-names* prim-proc)
+        (apply prim-proc args)]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))

@@ -2,18 +2,49 @@
 ;; Parsed expression datatypes
 
 (define-datatype expression expression?
-  [var-exp        ; variable references
-   (id symbol?)]
-  [lit-exp        ; "Normal" data.  Did I leave out any types?
-   (datum
-    (lambda (x)
-      (ormap 
-       (lambda (pred) (pred x))
-       (list number? vector? boolean? symbol? string? pair? null?))))]
-  [app-exp        ; applications
-   (rator expression?)
-   (rands (list-of expression?))]  
-  )
+  ;; for numbers and quoted things
+  ;; to find quoted things, they are a list starting with quote
+  [lit-exp
+    (val (or2Type (lambda (x) (not (list? x))) (lambda (x) (eqv? (car x) 'quote))))]
+  ;; for defined variables
+  [var-exp
+    (id symbol?)]
+  ;; lambda has a few cases
+  ;; (lambda (vars) bodies)
+  ;; (lambda var bodies)
+  ;; (lambda (first.rest) bodies)
+  [lambda-exp-list (id (list-of symbol?)) (body (list-of expression?))]
+  [lambda-exp-sym (id symbol?) (body (list-of expression?))]
+  [lambda-exp-improper (id pair?) (body (list-of expression?))]
+  ;; 
+  [app-exp
+    (rator expression?)
+    (rands (list-of expression?))]
+  ;; going to be handled as 
+  [let-exp
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
+  [let*-exp
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
+  [letrec-exp
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
+  [namedlet-exp
+    (name symbol?)
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
+  [set!-exp
+    (var symbol?)
+    (val expression?)]
+  [if-exp
+    (con expression?)
+    (thn expression?)
+    (els expression?)])
 
 	
 ; datatype for procedures.  At first there is only one
