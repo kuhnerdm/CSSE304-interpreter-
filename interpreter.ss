@@ -5,10 +5,6 @@
     ; later we may add things that are not expressions.
     (eval-exp form (empty-env))))
 
-(define contains
-  (lambda (ls val)
-    (find (lambda (x) (eqv? x val)) ls)))
-
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
@@ -91,7 +87,7 @@
 (define apply-prim-proc
   (lambda (prim-proc args)
     (cond prim-proc
-      [(contains *prim-proc-names* prim-proc)
+      [(contains prim-proc *prim-proc-names*)
         (apply prim-proc args)]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
