@@ -1,9 +1,17 @@
-(load "c:/Users/hirschag/Downloads/work/CSSE304/A011/chez-init.ss")
+(load "c:/users/kuhnerdm/dropbox/rhit/csse304/chez-init.ss")
 
 (define or2Type
   (lambda (t1 t2)
     (lambda (x)
       (or (t1 x) (t2 x)))))
+
+(define is-quoted-list?
+  (lambda (x)
+    (and (pair? x) (eqv? (car x) 'quote) (list? (cadr x)) (null? (cddr x)))))
+
+(define is-quoted-symbol?
+  (lambda (x)
+    (and (pair? x) (eqv? (car x) 'quote) (symbol? (cadr x)) (null? (cddr x)))))
 
 (define-datatype expression expression?
   ;; for numbers and quoted things
@@ -17,9 +25,9 @@
   ;; (lambda (vars) bodies)
   ;; (lambda var bodies)
   ;; (lambda (first.rest) bodies)
-  [lambda-exp
-    (vars (or2Type symbol? (list-of symbol?)))
-    (body (list-of expression?))]
+  [lambda-exp-list (id (list-of symbol?)) (body (list-of expression?))]
+  [lambda-exp-sym (id symbol?) (body (list-of expression?))]
+  [lambda-exp-improper (id pair?) (body (list-of expression?))]
   ;; 
   [app-exp
     (rator expression?)
@@ -72,20 +80,31 @@
   (lambda (datum)
     (cond
       [(symbol? datum) (var-exp datum)]
-      [(or (number? datum)
-           (boolean? datum)
-           (string? datum)
-           (vector? datum)) (lit-exp datum)]
+      [(number? datum) (lit-exp datum)]
+      [(string? datum) (lit-exp datum)]
+      [(is-quoted-list? datum) (lit-exp datum)]
+      [(is-quoted-symbol? datum) (lit-exp datum)]
+      [(boolean? datum) (lit-exp datum)]
+      [(vector? datum) (lit-exp datum)]
       [(pair? datum)
        (cond
          [(eqv? (car datum) 'quote) ;; (quote this)
           (lit-exp `',datum)]
-         [(eqv? (car datum) 'lambda) ;; (lambda (vars) bodies)
-          (if (or (symbol? (2nd datum)) (for-all symbol? (2nd datum)) (null? (2nd datum)))
-              (if (> (length datum) 2)
-                  (lambda-exp (2nd datum) (map parse-exp (cddr datum)))
-                  (eopl:error 'parse-exp "Bad lambda: wrong length: ~s" datum))
-              (eopl:error 'parse-exp "Bad lambda: check vars: ~s" datum))]
+         [(eqv? (car datum) 'lambda)
+          (cond
+            [(null? (cdr datum)) ; (lambda)
+              (eopl:error 'parse-exp "bad lambda: no body, no variables ~s" datum)]
+            [(null? (cddr datum)) ; (lambda x)
+              (eopl:error 'parse-exp "bad lambda: no body ~s" datum)]
+            [else ; (lambda [something] y ...)
+              (cond
+                [(symbol? (2nd datum)) ; (lambda x y ...)
+                  (lambda-exp-sym (2nd datum) (map parse-exp (cddr datum)))]
+                [((list-of symbol?) (2nd datum)) ; (lambda (x y z) q ...)
+                  (lambda-exp-list (2nd datum) (map parse-exp (cddr datum)))]
+                [(and (pair? (2nd datum)) (not (list? (2nd datum)))) ; (lambda (x y . z) q ...)
+                  (lambda-exp-improper (2nd datum) (map parse-exp (cddr datum)))]
+                [else (eopl:error 'parse-exp "bad lambda: bad types for arguments ~s" datum)])])]
          [(eqv? (car datum) 'let) ;; (let ([pairs]) bodies)
           (if (symbol? (2nd datum))
               ;; named let
