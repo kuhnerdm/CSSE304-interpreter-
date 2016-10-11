@@ -5,7 +5,7 @@
   ;; for numbers and quoted things
   ;; to find quoted things, they are a list starting with quote
   [lit-exp
-    (val (or2Type (lambda (x) (not (list? x))) (lambda (x) (eqv? (car x) 'quote))))]
+    (val is-literal?)]
   ;; for defined variables
   [var-exp
     (id symbol?)]

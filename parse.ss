@@ -35,8 +35,8 @@
       [(symbol? datum) (var-exp datum)]
       [(number? datum) (lit-exp datum)]
       [(string? datum) (lit-exp datum)]
-      [(is-quoted-list? datum) (lit-exp datum)]
-      [(is-quoted-symbol? datum) (lit-exp datum)]
+      [(is-quoted-list? datum) (lit-exp (cadr datum))]
+      [(is-quoted-symbol? datum) (lit-exp (cadr datum))]
       [(boolean? datum) (lit-exp datum)]
       [(vector? datum) (lit-exp datum)]
       [(pair? datum)

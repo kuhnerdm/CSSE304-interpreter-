@@ -161,8 +161,9 @@
     (display "--> ")
     ;; notice that we don't save changes to the environment...
     (let ([answer (top-level-eval (parse-exp (read)))])
-      ;; TODO: are there answers that should display differently?
-      (eopl:pretty-print answer) (newline)
+      (if (proc-val? answer) ; TODO: Does not work, fix
+        (begin (display "<interpreter procedure>") (newline))
+        (begin (eopl:pretty-print answer) (newline)))
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp

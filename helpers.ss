@@ -9,3 +9,13 @@
 (define (map proc ls)
   (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls)))
 
+;; things that can be a literal
+(define is-literal?
+  (lambda (x)
+    (or
+      (number? x)
+      (string? x)
+      (list? x)
+      (symbol? x)
+      (boolean? x)
+      (vector? x))))
