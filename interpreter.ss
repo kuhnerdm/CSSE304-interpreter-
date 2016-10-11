@@ -3,7 +3,7 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form)))
+    (eval-exp form (empty-env))))
 
 (define contains
   (lambda (ls val)
@@ -12,7 +12,7 @@
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
-  (lambda (exp)
+  (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
@@ -22,21 +22,33 @@
 		          "variable not found in environment: ~s"
 			   id)))] 
       [app-exp (rator rands)
-        (let ([proc-value (eval-exp rator)]
-              [args (eval-rands rands)])
+        (let ([proc-value (eval-exp rator env)]
+              [args (eval-rands rands env)])
           (apply-proc proc-value args))]
       [if-exp (con thn els)
-        (if (eval-exp con)
-          (eval-exp thn)
+        (if (eval-exp con env)
+          (eval-exp thn env)
           (if (not (null? els))
-            (eval-exp els)))]
+            (eval-exp els env)))]
+      [let-exp (var exp body)
+        (let ([extended-env
+          (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+          (eval-rands body extended-env))]
+      [let*-exp (var exp body) ; Same as let because our modified map guarantees left->right
+        (let ([extended-env
+          (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+          (eval-rands body extended-env))]
+      [letrec-exp (var exp body)
+        (let ([extended-env
+          (extend-env var (map (lambda (x) (eval-exp x extended-env)) exp) env)])
+          (eval-rands body extended-env))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands)
-    (map eval-exp rands)))
+  (lambda (rands env)
+    (map (lambda (x) (eval-exp x env)) rands)))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
