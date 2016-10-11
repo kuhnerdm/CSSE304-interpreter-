@@ -104,7 +104,7 @@
 
 (define (unparse-exp datum)
   (cases expression datum
-    [lit-exp (val) val]
+    [lit-exp (val) (list 'quote val)]
     [var-exp (id) id]
     [lambda-exp (vars body)
       (cons 'lambda (cons vars (map unparse-exp body)))]

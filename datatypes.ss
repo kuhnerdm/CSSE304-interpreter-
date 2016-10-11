@@ -57,7 +57,12 @@
     (args (list-of symbol?))
     (body (list-of expression?))
     (env environment?)])
-	 
+
+; ('prim-proc name)
+; ('closure (args) (body) env)
+
+; (define make-prim
+;   (lambda))	 
 	 
 	 
 	
