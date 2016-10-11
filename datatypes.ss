@@ -52,7 +52,11 @@
 
 (define-datatype proc-val proc-val?
   [prim-proc
-   (name symbol?)])
+    (name symbol?)]
+  [closure
+    (args (list-of symbol?))
+    (body (list-of expression?))
+    (env environment?)])
 	 
 	 
 	 

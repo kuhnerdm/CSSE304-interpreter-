@@ -1,5 +1,3 @@
-(load "c:/users/kuhnerdm/dropbox/rhit/csse304/chez-init.ss")
-
 (define or2Type
   (lambda (t1 t2)
     (lambda (x)

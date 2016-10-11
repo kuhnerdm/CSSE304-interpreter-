@@ -12,11 +12,12 @@
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env init-env id; look up its value.
+				(apply-env env id; look up its value.
       	   (lambda (x) x) ; procedure to call if id is in the environment 
-           (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-		          "variable not found in environment: ~s"
-			   id)))] 
+           (lambda () (apply-env init-env id 
+              (lambda (x) x) 
+              (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+              "variable not found in environment: ~s" id)))))] 
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator env)]
               [args (eval-rands rands env)])
@@ -29,15 +30,17 @@
       [let-exp (var exp body)
         (let ([extended-env
           (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
-          (eval-rands body extended-env))]
+          (eval-bodies body extended-env))]
       [let*-exp (var exp body) ; Same as let because our modified map guarantees left->right
         (let ([extended-env
           (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
-          (eval-rands body extended-env))]
+          (eval-bodies body extended-env))]
       [letrec-exp (var exp body)
         (let ([extended-env
           (extend-env var (map (lambda (x) (eval-exp x extended-env)) exp) env)])
-          (eval-rands body extended-env))]
+          (eval-bodies body extended-env))]
+      [lambda-exp-list (id body)
+        (closure id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -45,6 +48,13 @@
 (define eval-rands
   (lambda (rands env)
     (map (lambda (x) (eval-exp x env)) rands)))
+
+; evaluate the list of bodies, returning the last result
+; This works because our new map guarantees left->right
+
+(define eval-bodies
+  (lambda (bodies env)
+    (car (reverse (eval-rands bodies env)))))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
@@ -54,7 +64,10 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-			; You will add other cases
+			[closure (procargs body env)
+        (let ([extended-env
+          (extend-env procargs args env)])
+          (eval-bodies body extended-env))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -86,9 +99,59 @@
 
 (define apply-prim-proc
   (lambda (prim-proc args)
-    (cond prim-proc
-      [(contains prim-proc *prim-proc-names*)
-        (apply prim-proc args)]
+    (case prim-proc
+      [(+) (apply + args)]
+      [(-) (apply - args)]
+      [(*) (apply * args)]
+      [(/) (apply / args)]
+      [(add1) (apply add1 args)]
+      [(sub1) (apply sub1 args)]
+      [(cons) (apply cons args)]
+      [(=) (apply = args)]
+      [(zero?) (apply zero? args)]
+      [(not) (apply not args)]
+      [(<) (apply < args)]
+      [(>) (apply > args)]
+      [(<=) (apply <= args)]
+      [(>=) (apply >= args)]
+      [(!=) (apply != args)]
+      [(car) (apply car args)]
+      [(cdr) (apply cdr args)]
+      [(list) (apply list args)]
+      [(null?) (apply null? args)]
+      [(assq) (apply assq args)]
+      [(eq?) (apply eq? args)]
+      [(equal?) (apply equal? args)]
+      [(atom?) (apply atom? args)]
+      [(length) (apply length args)]
+      [(list->vector) (apply list->vector args)]
+      [(list?) (apply list? args)]
+      [(pair?) (apply pair? args)]
+      [(procedure?) (apply procedure? args)]
+      [(vector->list) (apply vector->list args)]
+      [(vector) (apply vector args)]
+      [(make-vector) (apply make-vector args)]
+      [(vector-ref) (apply vector-ref args)]
+      [(vector?) (apply vector? args)]
+      [(number?) (apply number? args)]
+      [(symbol?) (apply symbol? args)]
+      [(set-car!) (apply set-car! args)]
+      [(set-cdr!) (apply set-cdr! args)]
+      [(vector-set!) (apply vector-set! args)]
+      [(display) (apply display args)]
+      [(newline) (apply newline args)]
+      [(caar) (apply caar args)]
+      [(cadr) (apply cadr args)]
+      [(cdar) (apply cdar args)]
+      [(cddr) (apply cddr args)]
+      [(caaar) (apply caaar args)]
+      [(caadr) (apply caadr args)]
+      [(cadar) (apply cadar args)]
+      [(caddr) (apply caddr args)]
+      [(cdaar) (apply cdaar args)]
+      [(cdadr) (apply cdadr args)]
+      [(cddar) (apply cddar args)]
+      [(cdddr) (apply cdddr args)]
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
