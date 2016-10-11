@@ -7,5 +7,5 @@
 
 ;; map that will always run in order from left to right
 (define (map proc ls)
-  (fold-right (lambda (next prev) (cons (proc next) prev)) '() ls))
+  (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls)))
 
