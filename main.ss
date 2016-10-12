@@ -3,15 +3,15 @@
 ;                  
 ; Claude Anderson.  Last modified April, 2014
 
-(load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/chez-init.ss")
+(load "chez-init.ss")
 
 (define load-all ; make it easy to reload the files
   (lambda ()
-  	(load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/helpers.ss")
-    (load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/datatypes.ss")
-    (load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/parse.ss")
-    (load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/env.ss")
-    (load "c:/users/kuhnerdm/desktop/git_kuhnerdm/csse304-interpreter-/interpreter.ss")))
+    (load "helpers.ss")
+    (load "datatypes.ss")
+    (load "parse.ss")
+    (load "env.ss")
+    (load "interpreter.ss")))
 
 (load-all)
 

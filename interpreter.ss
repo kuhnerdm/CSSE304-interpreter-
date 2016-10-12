@@ -160,11 +160,17 @@
   (lambda ()
     (display "--> ")
     ;; notice that we don't save changes to the environment...
-    (let ([answer (top-level-eval (parse-exp (read)))])
-      (if (proc-val? answer) ; TODO: Does not work, fix
-        (begin (display "<interpreter procedure>") (newline))
-        (begin (eopl:pretty-print answer) (newline)))
-      (rep))))  ; tail-recursive, so stack doesn't grow.
+    (letrec ([answer (top-level-eval (parse-exp (read)))]
+          [loop
+            (lambda (val)
+              (cond
+                [(null? val) '()]
+                [(proc-val? val) '<interpreter-procedure>]
+                [(pair? val) (cons (loop (car val)) (loop (cdr val)))]
+                [else val]))])
+      (eopl:pretty-print (loop answer))
+      (newline))
+    (rep)))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
   (lambda (x) (top-level-eval (parse-exp x))))

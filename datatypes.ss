@@ -61,8 +61,31 @@
 ; ('prim-proc name)
 ; ('closure (args) (body) env)
 
-; (define make-prim
-;   (lambda))	 
+ (define make-prim
+   (lambda (name)
+     (list 'prim-proc name)))
+
+(define make-closure
+  (lambda (args body env)
+    (list 'closure args body env)))
+
+(define is-prim?
+  (lambda (prim)
+    (and (eqv? 'prim-proc (car prim))
+         (symbol? (cadr prim))
+         (eq? (length prim) 2))))
+
+(define is-closure?
+  (lambda (closure)
+    (and (eqv? 'closure (car closure))
+         (list? (cadr closure))
+         (list? (caddr closure))
+         (environment? (cadddr closure))
+         (eq? 4 (length closure)))))
+
+(define is-proc-val?
+  (lambda (proc)
+    (or (is-prim? proc) (is-closure? proc))))
 	 
 	 
 	

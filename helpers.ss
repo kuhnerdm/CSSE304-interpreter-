@@ -19,3 +19,8 @@
       (symbol? x)
       (boolean? x)
       (vector? x))))
+
+;; makes inline debugging easier
+(define (debug this)
+  (display this)
+  (newline))
