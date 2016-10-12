@@ -7,6 +7,10 @@
   (lambda (x)
     (and (pair? x) (eqv? (car x) 'quote) (list? (cadr x)) (null? (cddr x)))))
 
+(define is-quoted-vector?
+  (lambda (x)
+    (and (pair? x) (eqv? (car x) 'quote) (vector? (cadr x)) (null? (cddr x)))))
+
 (define is-quoted-symbol?
   (lambda (x)
     (and (pair? x) (eqv? (car x) 'quote) (symbol? (cadr x)) (null? (cddr x)))))
@@ -36,6 +40,7 @@
       [(number? datum) (lit-exp datum)]
       [(string? datum) (lit-exp datum)]
       [(is-quoted-list? datum) (lit-exp (cadr datum))]
+      [(is-quoted-vector? datum) (lit-exp (cadr datum))]
       [(is-quoted-symbol? datum) (lit-exp (cadr datum))]
       [(boolean? datum) (lit-exp datum)]
       [(vector? datum) (lit-exp datum)]
