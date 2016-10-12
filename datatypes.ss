@@ -1,3 +1,10 @@
+(define-datatype environment environment?
+  (empty-env-record)
+  (extended-env-record
+   (syms (list-of symbol?))
+   (vals (list-of scheme-value?))
+   (env environment?)))
+
 
 ;; Parsed expression datatypes
 
@@ -94,9 +101,3 @@
 (define scheme-value?
   (lambda (x) #t))
 
-(define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
-   (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
-   (env environment?)))

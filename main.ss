@@ -7,8 +7,8 @@
 
 (define load-all ; make it easy to reload the files
   (lambda ()
-    (load "helpers.ss")
     (load "datatypes.ss")
+    (load "helpers.ss")
     (load "parse.ss")
     (load "env.ss")
     (load "interpreter.ss")))
