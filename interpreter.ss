@@ -127,7 +127,7 @@
       [(list->vector) (apply list->vector args)]
       [(list?) (apply list? args)]
       [(pair?) (apply pair? args)]
-      [(procedure?) (apply procedure? args)]
+      [(procedure?) (or (apply proc-val? args) (apply procedure? args))]
       [(vector->list) (apply vector->list args)]
       [(vector) (apply vector args)]
       [(make-vector) (apply make-vector args)]
