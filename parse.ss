@@ -105,8 +105,6 @@
            (eopl:error 'parse-exp "Bad expression, not a proper list: ~s" datum)])]
       [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
-
-
 (define (unparse-exp datum)
   (cases expression datum
     [lit-exp (val) (list 'quote val)]
@@ -132,51 +130,80 @@
     [if-exp (con thn els)
       (append (list 'if (unparse-exp con) (unparse-exp thn)) (if (null? els) '() (list (unparse-exp els))))]))
 
+(define get-rator-rands
+  (lambda (datum)
+    (cases expression datum
+      [lit-exp (val)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [var-exp (id)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [lambda-exp-list (vars body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [lambda-exp-sym (vars body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [lambda-exp-improper (vars body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [app-exp (rator rands)
+        (cons rator rands)]
+      [let-exp (var exp body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [let*-exp (var exp body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [letrec-exp (var exp body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [namedlet-exp (name var exp body)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [set!-exp (var val)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [if-exp (con thn els)
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)])))
+
 (define syntax-expand
-          (lambda (datum)
-            (cases expression datum
-              [app-exp (rator rands)
-                (cond
-                  [(equal? rator (var-exp 'cond))
-                   (begin (debug rator) (debug rands)
-                          (cond
-                            [(equal? (car rands) (var-exp 'else)) (syntax-expand (cadr rands))]
-                            [(null? (cdr rands)) (if-exp (syntax-expand (caar rands)) (syntax-expand (cadr rands)) '())]
-                            [else (if-exp (syntax-expand (caar rands))
-                                    (syntax-expand (cadr rands))
-                                    (syntax-expand (app-exp (var-exp 'cond) (cdr rands))))]))]
-                   [(equal? rator (var-exp 'begin))
-                    (app-exp (lambda-exp-list '() (map syntax-expand rands)) '())]
-                  [(equal? rator (var-exp 'and))
-                   (if (null? (cdr rands))
-                       (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f))) (syntax-expand (car rands)))
-                       (if-exp (car rands) (syntax-expand (app-exp (var-exp 'and) (cdr rands))) (lit-exp #f)))]
-                  [(equal? rator (var-exp 'or))
-                   (if (null? (cdr rands))
-                       (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f))) (syntax-expand (car rands)))
-                       (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands))))) (car rands)))]
-                  [else (app-exp rator (map syntax-expand rands))])]
-              [lit-exp (val) datum]
-              [var-exp (id) datum]
-              [lambda-exp-list (vars body)
-                (lambda-exp-list vars (map syntax-expand body))]
-              [lambda-exp-sym (vars body)
-                (lambda-exp-sym vars (map syntax-expand body))]
-              [lambda-exp-improper (vars body)
-                (lambda-exp-improper vars (map syntax-expand body))]
-              [let-exp (var exp body)
-                (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
-              [let*-exp (var exp body)
-                (cond 
-                  [(null? var) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
-                  [(null? (cdr var)) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
-                  [else (syntax-expand
-                          (app-exp (lambda-exp-list (car var) (syntax-expand (let*-exp (cdr var) (cdr exp) body))) (syntax-expand (car exp))))])]
-              [letrec-exp (var exp body)
-                (letrec-exp var (map syntax-expand exp) (map syntax-expand body))]
-              [namedlet-exp (name var exp body)
-                (namedlet-exp var (map syntax-expand exp) (map syntax-expand body))]
-              [set!-exp (var val)
-                (set!-exp var (syntax-expand val))]
-              [if-exp (con thn els)
-                (if-exp (syntax-expand con) (syntax-expand thn) (if (null? els) els (syntax-expand els)))])))
+  (lambda (datum)
+    (cases expression datum
+      [app-exp (rator rands)
+        (cond
+          [(equal? rator (var-exp 'cond))
+           (cond
+             [(equal? (car rands) (var-exp 'else)) (syntax-expand (cadr rands))]
+             [(null? (cdr rands))
+              (if-exp (syntax-expand (car (get-rator-rands (car rands)))) (syntax-expand (cadr (get-rator-rands (car rands)))) '())]
+             [else
+               (if-exp (syntax-expand (car (get-rator-rands (car rands))))
+                 (syntax-expand (cadr (get-rator-rands (car rands))))
+                 (syntax-expand (app-exp (var-exp 'cond) (cdr rands))))])]
+          [(equal? rator (var-exp 'begin))
+           (app-exp (lambda-exp-list '() (map syntax-expand rands)) '())]
+          [(equal? rator (var-exp 'and))
+           (if (null? (cdr rands))
+               (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f))) (syntax-expand (car rands)))
+               (if-exp (car rands) (syntax-expand (app-exp (var-exp 'and) (cdr rands))) (lit-exp #f)))]
+          [(equal? rator (var-exp 'or))
+           (if (null? (cdr rands))
+               (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f))) (syntax-expand (car rands)))
+               (app-exp (lambda-exp-list '(intpTempVal) (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands))))) (car rands)))]
+          [else (app-exp rator (map syntax-expand rands))])]
+      [lit-exp (val) datum]
+      [var-exp (id) datum]
+      [lambda-exp-list (vars body)
+        (lambda-exp-list vars (map syntax-expand body))]
+      [lambda-exp-sym (vars body)
+        (lambda-exp-sym vars (map syntax-expand body))]
+      [lambda-exp-improper (vars body)
+        (lambda-exp-improper vars (map syntax-expand body))]
+      [let-exp (var exp body)
+        (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
+      [let*-exp (var exp body)
+        (cond 
+          [(null? var) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
+          [(null? (cdr var)) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
+          [else (syntax-expand
+                  (app-exp (lambda-exp-list (car var) (syntax-expand (let*-exp (cdr var) (cdr exp) body))) (syntax-expand (car exp))))])]
+      [letrec-exp (var exp body)
+        (letrec-exp var (map syntax-expand exp) (map syntax-expand body))]
+      [namedlet-exp (name var exp body)
+        (namedlet-exp var (map syntax-expand exp) (map syntax-expand body))]
+      [set!-exp (var val)
+        (set!-exp var (syntax-expand val))]
+      [if-exp (con thn els)
+        (if-exp (syntax-expand con) (syntax-expand thn) (if (null? els) els (syntax-expand els)))])))
