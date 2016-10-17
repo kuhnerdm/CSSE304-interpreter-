@@ -179,9 +179,14 @@
                (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
                (if-exp (car rands) (syntax-expand (app-exp (var-exp 'and) (cdr rands))) (lit-exp #f)))]
           [(equal? rator (var-exp 'or))
-           (if (null? (cdr rands))
-               (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
-               (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (car rands))))]
+           (if (null? rands) (lit-exp #f)
+               (if (null? (cdr rands))
+                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
+                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (car rands)))))]
+          [(equal? rator (var-exp 'while))
+           (letrec-exp '(mainWhileLoop)
+             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (map syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
+             (list (app-exp (var-exp 'mainWhileLoop) '())))]
           [else (app-exp rator (map syntax-expand rands))])]
       [lit-exp (val) datum]
       [var-exp (id) datum]
