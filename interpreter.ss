@@ -85,7 +85,6 @@
                         [(pair? var) (loop (cdr var) (cdr args) (cons (car var) newVar) (cons (car args) newArgs))]
                         [else (list (reverse (cons var newVar)) (reverse (cons args newArgs)))]))]
                [extended-env (extend-env (car mapped-vars) (cadr mapped-vars) env)])
-          (debug mapped-vars)
           (eval-bodies body extended-env))]
       [else (error 'apply-proc
               "Attempt to apply bad procedure: ~s" 
