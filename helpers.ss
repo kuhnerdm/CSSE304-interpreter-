@@ -12,9 +12,9 @@
 ;; for the lambda with an improper list
 (define (pairs-of proc)
   (lambda (l)
-    (let loop (l l)
+    (let loop ([l l])
       (cond [(proc l) #t]
-            [(and (pair? l) (proc (car l))) (loop cdr l)]
+            [(and (pair? l) (proc (car l))) (loop (cdr l))]
             [else #f]))))
 
 ;; things that can be a literal
