@@ -111,7 +111,11 @@
   (cases expression datum
     [lit-exp (val) (list 'quote val)]
     [var-exp (id) id]
-    [lambda-exp (vars body)
+    [lambda-exp-list (vars body)
+      (cons 'lambda (cons vars (map unparse-exp body)))]
+    [lambda-exp-sym (vars body)
+      (cons 'lambda (cons vars (map unparse-exp body)))]
+    [lambda-exp-improper (vars body)
       (cons 'lambda (cons vars (map unparse-exp body)))]
     [app-exp (rator rands)
       (cons (unparse-exp rator) (map unparse-exp rands))]
