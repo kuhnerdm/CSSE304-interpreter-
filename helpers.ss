@@ -9,6 +9,14 @@
 (define (map proc ls)
   (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls)))
 
+;; for the lambda with an improper list
+(define (pairs-of proc)
+  (lambda (l)
+    (let loop (l l)
+      (cond [(proc l) #t]
+            [(and (pair? l) (proc (car l))) (loop cdr l)]
+            [else #f]))))
+
 ;; things that can be a literal
 (define is-literal?
   (lambda (x)

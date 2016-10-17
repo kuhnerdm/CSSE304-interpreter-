@@ -63,6 +63,14 @@
   [closure
     (args (list-of symbol?))
     (body (list-of expression?))
+    (env environment?)]
+  [closure-alt
+    (arg symbol?)
+    (body (list-of expression?))
+    (env environment?)]
+  [closure-pair
+    (arg (pairs-of symbol?))
+    (body (list-of expression?))
     (env environment?)])
 
 ; ('prim-proc name)
