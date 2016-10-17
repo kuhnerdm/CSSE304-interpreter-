@@ -51,7 +51,7 @@
   [if-exp
     (con expression?)
     (thn expression?)
-    (els expression?)])
+    (els (lambda (x) (or (expression? x) (null? x))))])
 
 	
 ; datatype for procedures.  At first there is only one

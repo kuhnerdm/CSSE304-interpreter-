@@ -26,7 +26,8 @@
         (if (eval-exp con env)
           (eval-exp thn env)
           (if (not (null? els))
-            (eval-exp els env)))]
+              (eval-exp els env)
+              (void)))]
       [let-exp (var exp body)
         (let ([extended-env
           (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
