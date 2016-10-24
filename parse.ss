@@ -88,7 +88,7 @@
                     (letrec-exp
                       (map car (cadr datum)) ; Proc names
                       (map cadadr (cadr datum)) ; idss
-                      (map (lambda (x) (parse-exp (cddadr x))) (cadr datum)) ; bodiess
+                      (map (lambda (x) (map parse-exp (cddadr x))) (cadr datum)) ; bodiess
                       (map parse-exp (cddr datum))) ; letrec-bodies
                     (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" 'letrec datum))
                 (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" 'letrec datum))
@@ -214,8 +214,8 @@
           [(null? (cdr var)) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
           [else (syntax-expand
                   (app-exp (lambda-exp-list (car var) (syntax-expand (let*-exp (cdr var) (cdr exp) body))) (syntax-expand (car exp))))])]
-      [letrec-exp (var exp body)
-        (letrec-exp var (map syntax-expand exp) (map syntax-expand body))]
+      [letrec-exp (proc-names idss bodiess letrec-bodies)
+        (letrec-exp proc-names idss bodiess letrec-bodies)]
       [namedlet-exp (name var exp body)
         (namedlet-exp var (map syntax-expand exp) (map syntax-expand body))]
       [set!-exp (var val)
