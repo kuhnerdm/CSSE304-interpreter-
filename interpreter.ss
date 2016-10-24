@@ -36,10 +36,9 @@
         (let ([extended-env
                 (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
           (eval-bodies body extended-env))]
-      [letrec-exp (var exp body)
-        (let ([extended-env
-                (extend-env var (map (lambda (x) (eval-exp x extended-env)) exp) env)])
-          (eval-bodies body extended-env))]
+      [letrec-exp (proc-names idss bodiess letrec-bodies)
+        (eval-bodies letrec-bodies
+          (extend-env-recursively proc-names idss bodiess env))]
       [lambda-exp-list (id body) ;; there is probably a way to clean this up a bit more than this
         (closure id body env)] ; but this will also work and I think it fits into the rest of the 
       [lambda-exp-sym (id body) ; assignments
