@@ -159,7 +159,7 @@
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
       [let*-exp (var exp body)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
-      [letrec-exp (var exp body)
+      [letrec-exp (var idss exp body)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
       [namedlet-exp (name var exp body)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
@@ -215,9 +215,9 @@
           [else (syntax-expand
                   (app-exp (lambda-exp-list (car var) (syntax-expand (let*-exp (cdr var) (cdr exp) body))) (syntax-expand (car exp))))])]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
-        (letrec-exp proc-names idss bodiess letrec-bodies)]
+        (letrec-exp proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess) (map syntax-expand letrec-bodies))]
       [namedlet-exp (name var exp body)
-        (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp)))]
+        (syntax-expand (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp))))]
       [set!-exp (var val)
         (set!-exp var (syntax-expand val))]
       [if-exp (con thn els)
