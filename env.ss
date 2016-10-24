@@ -40,7 +40,7 @@
           (closure (list-ref idss pos)
             (list-ref bodiess pos)
             env)
-          (apply-env old-env sym)))))))
+          (apply-env old-env sym succeed fail)))))))
 
 (define extend-env-recursively
   (lambda (proc-names idss bodiess old-env)

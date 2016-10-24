@@ -66,12 +66,12 @@
          [(eqv? (car datum) 'let) ;; (let ([pairs]) bodies)
           (if (symbol? (2nd datum))
               ;; named let
-              (if (and (list? (3nd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (3nd datum)))
-                  (if (for-all (lambda (x) (symbol? (car x))) (3nd datum))
+              (if (and (list? (3rd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (3rd datum)))
+                  (if (for-all (lambda (x) (symbol? (car x))) (3rd datum))
                       (if (> (length datum) 3)
                           (namedlet-exp (2nd datum)
-                            (map car (3nd datum))
-                            (map (lambda (x) (parse-exp (2nd x))) (3nd datum))
+                            (map car (3rd datum))
+                            (map (lambda (x) (parse-exp (2nd x))) (3rd datum))
                             (map parse-exp (cdddr datum)))
                           (eopl:error 'parse-exp "Bad named let: wrong length (no bodies or vars): ~s" datum))
                       (eopl:error 'parse-exp "Bad named let: improper var definition (not a symbol): ~s" datum))
@@ -217,7 +217,7 @@
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (letrec-exp proc-names idss bodiess letrec-bodies)]
       [namedlet-exp (name var exp body)
-        (namedlet-exp var (map syntax-expand exp) (map syntax-expand body))]
+        (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp)))]
       [set!-exp (var val)
         (set!-exp var (syntax-expand val))]
       [if-exp (con thn els)

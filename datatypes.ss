@@ -1,9 +1,9 @@
 (define-datatype environment environment?
   (empty-env-record)
   (extended-env-record
-   (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
-   (env environment?))
+    (syms (list-of symbol?))
+    (vals (list-of scheme-value?))
+    (env environment?))
   (recursively-extended-env-record
     (proc-names (list-of symbol?))
     (idss (list-of (list-of symbol?)))
@@ -17,10 +17,10 @@
   ;; for numbers and quoted things
   ;; to find quoted things, they are a list starting with quote
   [lit-exp
-  (val is-literal?)]
+    (val is-literal?)]
   ;; for defined variables
   [var-exp
-  (id symbol?)]
+    (id symbol?)]
   ;; lambda has a few cases
   ;; (lambda (vars) bodies)
   ;; (lambda var bodies)
@@ -30,61 +30,61 @@
   [lambda-exp-improper (id pair?) (body (list-of expression?))]
   ;; 
   [app-exp
-  (rator expression?)
-  (rands (list-of expression?))]
+    (rator expression?)
+    (rands (list-of expression?))]
   ;; going to be handled as 
   [let-exp
-  (var (list-of symbol?))
-  (exp (list-of expression?))
-  (body (list-of expression?))]
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
   [let*-exp
-  (var (list-of symbol?))
-  (exp (list-of expression?))
-  (body (list-of expression?))]
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
   [letrec-exp
-  (proc-names (list-of symbol?))
-  (idss (list-of (list-of symbol?)))
-  (bodiess (list-of (list-of expression?)))
-  (letrec-bodies (list-of expression?))]
+    (proc-names (list-of symbol?))
+    (idss (list-of (list-of symbol?)))
+    (bodiess (list-of (list-of expression?)))
+    (letrec-bodies (list-of expression?))]
   [namedlet-exp
-  (name symbol?)
-  (var (list-of symbol?))
-  (exp (list-of expression?))
-  (body (list-of expression?))]
+    (name symbol?)
+    (var (list-of symbol?))
+    (exp (list-of expression?))
+    (body (list-of expression?))]
   [set!-exp
-  (var symbol?)
-  (val expression?)]
+    (var symbol?)
+    (val expression?)]
   [if-exp
-  (con expression?)
-  (thn expression?)
-  (els (lambda (x) (or (expression? x) (null? x))))])
+    (con expression?)
+    (thn expression?)
+    (els (lambda (x) (or (expression? x) (null? x))))])
 
 
-; datatype for procedures.  At first there is only one
-; kind of procedure, but more kinds will be added later.
+                                        ; datatype for procedures.  At first there is only one
+                                        ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
   [prim-proc
-  (name symbol?)]
+    (name symbol?)]
   [closure
-  (args (list-of symbol?))
-  (body (list-of expression?))
-  (env environment?)]
+    (args (list-of symbol?))
+    (body (list-of expression?))
+    (env environment?)]
   [closure-alt
-  (arg symbol?)
-  (body (list-of expression?))
-  (env environment?)]
+    (arg symbol?)
+    (body (list-of expression?))
+    (env environment?)]
   [closure-pair
-  (arg (pairs-of symbol?))
-  (body (list-of expression?))
-  (env environment?)])
+    (arg (pairs-of symbol?))
+    (body (list-of expression?))
+    (env environment?)])
 
-; ('prim-proc name)
-; ('closure (args) (body) env)
+                                        ; ('prim-proc name)
+                                        ; ('closure (args) (body) env)
 
 (define make-prim
- (lambda (name)
-   (list 'prim-proc name)))
+  (lambda (name)
+    (list 'prim-proc name)))
 
 (define make-closure
   (lambda (args body env)
@@ -93,16 +93,16 @@
 (define is-prim?
   (lambda (prim)
     (and (eqv? 'prim-proc (car prim))
-     (symbol? (cadr prim))
-     (eq? (length prim) 2))))
+         (symbol? (cadr prim))
+         (eq? (length prim) 2))))
 
 (define is-closure?
   (lambda (closure)
     (and (eqv? 'closure (car closure))
-     (list? (cadr closure))
-     (list? (caddr closure))
-     (environment? (cadddr closure))
-     (eq? 4 (length closure)))))
+         (list? (cadr closure))
+         (list? (caddr closure))
+         (environment? (cadddr closure))
+         (eq? 4 (length closure)))))
 
 (define is-proc-val?
   (lambda (proc)
