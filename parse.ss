@@ -88,8 +88,8 @@
                     (letrec-exp
                       (map car (cadr datum)) ; Proc names
                       (map cadadr (cadr datum)) ; idss
-                      (map cddadr (cadr datum)) ; bodiess
-                      (cddr datum)) ; letrec-bodies
+                      (map (lambda (x) (parse-exp (cddadr x))) (cadr datum)) ; bodiess
+                      (map parse-exp (cddr datum))) ; letrec-bodies
                     (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" 'letrec datum))
                 (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" 'letrec datum))
             (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" 'letrec datum))]
