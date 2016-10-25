@@ -99,7 +99,7 @@
   (lambda (x y)
     (eqv? x y)))
 
-(define *prim-proc-names* '(+ - * / add1 sub1 cons = zero? not < > <= >= != car cdr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map quotient list-tail append))
+(define *prim-proc-names* '(+ - * / add1 sub1 cons = zero? not < > <= >= != car cdr list null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map quotient list-tail append eqv?))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -174,6 +174,7 @@
       ;; assignment 15
       [(list-tail) (apply list-tail args)]
       [(append) (apply append args)]
+      [(eqv?) (apply eqv? args)]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 
               prim-op)])))
