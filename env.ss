@@ -1,4 +1,4 @@
-; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
+                                        ; Environment definitions for CSSE 304 Scheme interpreter.  Based on EoPL section 2.3
 
 (define empty-env
   (lambda ()
@@ -8,19 +8,27 @@
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
+(define (flatten implst)
+  (if (list? implst)
+      implst
+      (let loop ([implst implst])
+        (if (pair? implst)
+            (cons (car implst) (loop (cdr implst)))
+            (cons implst '())))))
+
 (define list-find-position
   (lambda (sym los)
-    (list-index (lambda (xsym) (eqv? sym xsym)) los)))
+    (list-index (lambda (xsym) (eqv? sym xsym)) (flatten los))))
 
 (define list-index
   (lambda (pred ls)
     (cond
-     ((null? ls) #f)
-     ((pred (car ls)) 0)
-     (else (let ((list-index-r (list-index pred (cdr ls))))
-      (if (number? list-index-r)
-       (+ 1 list-index-r)
-       #f))))))
+      ((null? ls) #f)
+      ((pred (car ls)) 0)
+      (else (let ((list-index-r (list-index pred (cdr ls))))
+              (if (number? list-index-r)
+                  (+ 1 list-index-r)
+                  #f))))))
 
 (define apply-env
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
@@ -28,19 +36,21 @@
       (empty-env-record ()
         (fail))
       (extended-env-record (syms vals env)
-       (let ((pos (list-find-position sym syms)))
-         (if (number? pos)
-           (succeed (list-ref vals pos))
-           (apply-env env sym succeed fail))))
-      (recursively-extended-env-record
-        (procnames idss bodiess old-env)
-        (let ([pos 
-          (list-find-position sym procnames)])
-        (if (number? pos)
-          (closure (list-ref idss pos)
-            (list-ref bodiess pos)
-            env)
-          (apply-env old-env sym succeed fail)))))))
+        (let ((pos (list-find-position sym syms)))
+          (if (number? pos)
+              (succeed (list-ref vals pos))
+              (apply-env env sym succeed fail))))
+      (recursively-extended-env-record (procnames idss bodiess old-env)
+        (let ([pos (list-find-position sym procnames)])
+          (if (number? pos)
+              (if (list? (list-ref idss pos)) 
+                  (closure (list-ref idss pos)
+                    (list-ref bodiess pos)
+                    env)
+                  (closure-pair (list-ref idss pos)
+                    (list-ref bodiess pos)
+                    env))
+              (apply-env old-env sym succeed fail)))))))
 
 (define extend-env-recursively
   (lambda (proc-names idss bodiess old-env)

@@ -13,9 +13,13 @@
 (define (pairs-of proc)
   (lambda (l)
     (let loop ([l l])
-      (cond [(proc l) #t]
+      (cond [(or (proc l) (null? l)) #t]
             [(and (pair? l) (proc (car l))) (loop (cdr l))]
             [else #f]))))
+
+(define (pair-of proc)
+  (lambda (l)
+    (and (pair? l) (proc (car l)) (proc (cdr l)))))
 
 ;; things that can be a literal
 (define is-literal?
@@ -32,3 +36,13 @@
 (define (debug this)
   (display this)
   (newline))
+
+
+
+(define list-ref
+  (lambda (list pos)
+    (let loop ([ls list] [p pos])
+      (cond
+        [(eq? p 0) (if (pair? ls) (car ls) ls)]
+        [(pair? list) (loop (cdr ls) (- p 1))]
+        [else (eopl:error 'list-ref "list-ref failed at ~s ~s" list pos)]))))
