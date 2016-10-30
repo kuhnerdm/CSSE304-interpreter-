@@ -15,47 +15,48 @@
         (apply-env env id; look up its value.
           (lambda (x) x) ; procedure to call if id is in the environment 
           (lambda () (apply-env init-env id 
-           (lambda (x) x) 
+                       (lambda (x) x) 
                        (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-                        "variable not found in environment: ~s" id)))))] 
-        [app-exp (rator rands)
+                                    "variable not found in environment: ~s" id)))))] 
+      [app-exp (rator rands)
         (let ([proc-value (eval-exp rator env)]
-          [args (eval-rands rands env)])
-        (apply-proc proc-value args))]
-        [if-exp (con thn els)
+              [args (eval-rands rands env)])
+          (apply-proc proc-value args))]
+      [if-exp (con thn els)
         (if (eval-exp con env)
-          (eval-exp thn env)
-          (if (not (null? els))
-            (eval-exp els env)
-            (void)))]
-        [let-exp (var exp body)
+            (eval-exp thn env)
+            (if (not (null? els))
+                (eval-exp els env)
+                (void)))]
+      [let-exp (var exp body)
         (let ([extended-env
-          (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
-        (eval-bodies body extended-env))]
+                (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+          (eval-bodies body extended-env))]
       [let*-exp (var exp body) ; Same as let because our modified map guarantees left->right
-      (let ([extended-env
-        (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
-      (eval-bodies body extended-env))]
+        (let ([extended-env
+                (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+          (eval-bodies body extended-env))]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
-      (eval-bodies letrec-bodies
-        (extend-env-recursively proc-names idss bodiess env))]
+        (eval-bodies letrec-bodies
+          (extend-env-recursively proc-names idss bodiess env))]
       [lambda-exp-list (id body) ;; there is probably a way to clean this up a bit more than this
         (closure id body env)] ; but this will also work and I think it fits into the rest of the 
       [lambda-exp-sym (id body) ; assignments
-      (closure-alt id body env)]
+        (closure-alt id body env)]
       [lambda-exp-improper (id body)
-      (closure-pair id body env)]
+        (closure-pair id body env)]
       [set!-exp (var val)
-      (set-ref! (apply-env-ref env var
-          (lambda (v) v) ; success
-          (lambda () (apply-env-ref init-env var
-           (lambda (x) x) 
-                       (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-                        "variable not found in environment: ~s" id)))))
-      (eval-exp val env))]
+        (set-ref!
+          (apply-env-ref env var
+            (lambda (v) v) ; success
+            (lambda () (apply-env-ref init-env var
+                         (lambda (x) x) 
+                         (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                                      "variable not found in environment: ~s" id)))))
+          (eval-exp val env))]
       [define-exp (var val)
-      (set-car! (cdr init-env) (append (cdr init-env) var))
-      (set-car! (cddr init-env) (append (cddr init-env) (eval-exp val)))]
+        (set-car! (cdr init-env) (append (cadr init-env) var))
+        (set-car! (cddr init-env) (append (caddr init-env) (eval-exp val env)))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -89,11 +90,11 @@
           (eval-bodies body extended-env))]
       [closure-pair (procargs body env)
         (let* ([mapped-vars
-                (let loop ((var procargs) (args args) (newVar '()) (newArgs '()))
-                  (cond [(and (null? args) (pair? var))
-                         (error 'apply-proc "Attempt to apply bad args to: ~s" proc-val)]
-                        [(pair? var) (loop (cdr var) (cdr args) (cons (car var) newVar) (cons (car args) newArgs))]
-                        [else (list (reverse (cons var newVar)) (reverse (cons args newArgs)))]))]
+                 (let loop ((var procargs) (args args) (newVar '()) (newArgs '()))
+                   (cond [(and (null? args) (pair? var))
+                          (error 'apply-proc "Attempt to apply bad args to: ~s" proc-val)]
+                         [(pair? var) (loop (cdr var) (cdr args) (cons (car var) newVar) (cons (car args) newArgs))]
+                         [else (list (reverse (cons var newVar)) (reverse (cons args newArgs)))]))]
                [extended-env (extend-env (car mapped-vars) (cadr mapped-vars) env)])
           (eval-bodies body extended-env))]
       [else (error 'apply-proc

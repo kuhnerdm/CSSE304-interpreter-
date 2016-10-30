@@ -83,16 +83,16 @@
           (toLet-exp datum 'let* let*-exp)]
          [(eqv? (car datum) 'letrec)
           (if (and (list? (2nd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (2nd datum)))
-            (if (for-all (lambda (x) (symbol? (car x))) (2nd datum))
-                (if (> (length datum) 2)
-                    (letrec-exp
-                      (map car (cadr datum)) ; Proc names
-                      (map cadadr (cadr datum)) ; idss
-                      (map (lambda (x) (map parse-exp (cddadr x))) (cadr datum)) ; bodiess
-                      (map parse-exp (cddr datum))) ; letrec-bodies
-                    (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" 'letrec datum))
-                (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" 'letrec datum))
-            (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" 'letrec datum))]
+              (if (for-all (lambda (x) (symbol? (car x))) (2nd datum))
+                  (if (> (length datum) 2)
+                      (letrec-exp
+                        (map car (cadr datum)) ; Proc names
+                        (map cadadr (cadr datum)) ; idss
+                        (map (lambda (x) (map parse-exp (cddadr x))) (cadr datum)) ; bodiess
+                        (map parse-exp (cddr datum))) ; letrec-bodies
+                      (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" 'letrec datum))
+                  (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" 'letrec datum))
+              (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" 'letrec datum))]
          ;; (set! var exp)
          [(eqv? (car datum) 'set!)
           (if (eq? (length datum) 3)
