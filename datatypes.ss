@@ -2,7 +2,7 @@
   (empty-env-record)
   (extended-env-record
     (syms (list-of symbol?))
-    (vals (list-of scheme-value?))
+    (vals (list-of box?))
     (env environment?))
   (recursively-extended-env-record
     (proc-names (list-of symbol?))
@@ -57,7 +57,10 @@
   [if-exp
     (con expression?)
     (thn expression?)
-    (els (lambda (x) (or (expression? x) (null? x))))])
+    (els (lambda (x) (or (expression? x) (null? x))))]
+  [define-exp
+    (var symbol?)
+    (val expression?)])
 
 
                                         ; datatype for procedures.  At first there is only one

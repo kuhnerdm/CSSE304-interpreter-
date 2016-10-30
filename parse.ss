@@ -107,7 +107,9 @@
              (if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) '())]
             [(eq? (length datum) 4)
              (if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) (parse-exp (4th datum)))]
-            [else (eopl:error 'parse-exp "Bad if: too many or two few argumetns: ~s" datum)])]              
+            [else (eopl:error 'parse-exp "Bad if: too many or two few argumetns: ~s" datum)])]
+         [(eqv? (car datum) 'define)
+          (define-exp (2nd datum) (parse-exp (3rd datum)))]
          [(list? datum)
           (app-exp (parse-exp (1st datum))
             (map parse-exp (cdr datum)))]
@@ -166,7 +168,8 @@
       [set!-exp (var val)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
       [if-exp (con thn els)
-        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)])))
+        (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
+      [else (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)])))
 
 (define syntax-expand
   (lambda (datum)
@@ -221,4 +224,6 @@
       [set!-exp (var val)
         (set!-exp var (syntax-expand val))]
       [if-exp (con thn els)
-        (if-exp (syntax-expand con) (syntax-expand thn) (if (null? els) els (syntax-expand els)))])))
+        (if-exp (syntax-expand con) (syntax-expand thn) (if (null? els) els (syntax-expand els)))]
+      [define-exp (var val)
+        (define-exp var (syntax-expand val))])))
