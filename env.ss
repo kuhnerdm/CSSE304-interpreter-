@@ -51,17 +51,17 @@
         (let ([pos (list-find-position sym procnames)])
           (if (number? pos)
               (if (list? (list-ref idss pos)) 
-                  (closure (list-ref idss pos)
+                  (succeed (box (closure (list-ref idss pos)
                     (list-ref bodiess pos)
-                    env)
-                  (closure-pair (list-ref idss pos)
+                    env)))
+                  (succeed (box (closure-pair (list-ref idss pos)
                     (list-ref bodiess pos)
-                    env))
-              (apply-env old-env sym succeed fail)))))))
+                    env))))
+              (apply-env old-env sym (lambda (v) v) fail)))))))
 
 (define apply-env
   (lambda (env sym succeed fail)
-    (succeed (apply-env-ref env sym (lambda (v) (deref v)) fail))))
+    (succeed (apply-env-ref env sym deref fail))))
 
 (define extend-env-recursively
   (lambda (proc-names idss bodiess old-env)

@@ -195,7 +195,7 @@
            (if (null? rands) (lit-exp #f)
                (if (null? (cdr rands))
                    (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
-                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (car rands)))))]
+                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
           [(equal? rator (var-exp 'while))
            (letrec-exp '(mainWhileLoop)
              (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (map syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
@@ -216,7 +216,7 @@
           [(null? var) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
           [(null? (cdr var)) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
           [else (syntax-expand
-                  (app-exp (lambda-exp-list (car var) (syntax-expand (let*-exp (cdr var) (cdr exp) body))) (syntax-expand (car exp))))])]
+                  (app-exp (lambda-exp-list (list (car var)) (list (syntax-expand (let*-exp (cdr var) (cdr exp) body)))) (list (syntax-expand (car exp)))))])]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (letrec-exp proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess) (map syntax-expand letrec-bodies))]
       [namedlet-exp (name var exp body)
