@@ -14,10 +14,8 @@
       [var-exp (offset depth)
         (apply-env env offset depth; look up its value.
           (lambda (x) x) ; procedure to call if id is in the environment 
-          (lambda () (apply-env init-env id 
-                       (lambda (x) x) 
-                       (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-                                    "variable not found in environment: ~s" id)))))] 
+          (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                       "variable not found in environment: ~s" exp)))] 
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator env)]
               [args (eval-rands rands env)])
@@ -49,10 +47,8 @@
         (set-ref!
           (apply-env-ref env (car var) (cdr var)
             (lambda (v) v) ; success
-            (lambda () (apply-env-ref init-env (car var) (cdr var)
-                         (lambda (x) x) 
-                         (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-                                      "variable not found in environment: ~s" id)))))
+            (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                         "variable not found in environment: ~s" exp)))
           (eval-exp val env))]
       [define-exp (var val)
         (set-car! (cdr init-env) (append (cadr init-env) (list var)))

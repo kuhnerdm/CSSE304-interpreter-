@@ -19,8 +19,8 @@
     (val is-literal?)]
   ;; for defined variables
   [var-exp
-    (pos number?)
-    (layer (lambda (x) (or (number? x) (symbol? x))))]
+    (pos (lambda (x) (or (number? x) (symbol? x))))
+    (layer number?)]
   ;; lambda has a few cases
   ;; (lambda (vars) bodies)
   ;; (lambda var bodies)
@@ -52,7 +52,7 @@
     (exp (list-of expression?))
     (body (list-of expression?))]
   [set!-exp
-    (var (lambda (x) (and (number? (car x)) (or (number? (cdr x)) (symbol? (cdr x))))))
+    (var (lambda (x) (and (number? (cdr x)) (or (number? (car x)) (symbol? (car x))))))
     (val expression?)]
   [if-exp
     (con expression?)

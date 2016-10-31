@@ -15,14 +15,25 @@
 
 (define set-ref! set-box!)
 
+(define get-offset-in-global
+  (lambda (sym env)
+    (list-find-position sym (cadr env))))
+
 (define apply-env-ref
   (lambda (env offset depth succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
+    (dgprint env)
+    (dgprint offset)
+    (dgprint depth)
     (cases environment env
       (empty-env-record ()
-        (fail))
+        (succeed (apply-env-ref init-env (get-offset-in-global offset init-env) 0 (lambda (v) v)
+                   (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                                "variable not found in environment: ~s" offset)))))
       (extended-env-record (syms vals env)
         (if (equal? -1 depth) ; Global env
-          (succeed (apply-env-ref init-env offset depth (lambda (v) v) fail))
+            (succeed (apply-env-ref init-env (get-offset-in-global offset init-env) 0 (lambda (v) v)
+                       (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                         "variable not found in environment: ~s" offset))))
           (if (equal? 0 depth) ; Current env
             (succeed (list-ref vals offset))
             (apply-env-ref env offset (- depth 1) succeed fail))))
@@ -41,7 +52,7 @@
 
 (define apply-env
   (lambda (env offset depth succeed fail)
-    (succeed (apply-env-ref env depth succeed deref fail))))
+    (succeed (apply-env-ref env offset depth deref fail))))
 
 (define extend-env-recursively
   (lambda (proc-names idss bodiess old-env)

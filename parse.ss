@@ -37,7 +37,7 @@
   (lambda (sym curVars)
     (let loop ([curVars curVars] [layer 0])
       (if (null? curVars)
-          (cons -1 sym) ;; check in globals, then fail with elop error or something
+          (cons sym -1) ;; check in globals, then fail with elop error or something
           (let ([pos (list-find-position sym (car curVars))])
             (if (number? pos)
                 (cons pos layer)
