@@ -6,7 +6,7 @@
   (find (lambda (x) (eqv? x val)) ls))
 
 ;; map that will always run in order from left to right
-(define (map proc ls)
+(define (mapIO proc ls)
   (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls)))
 
 ;; for the lambda with an improper list
@@ -33,11 +33,9 @@
       (vector? x))))
 
 ;; makes inline debugging easier
-(define (debug this)
+(define (dgprint this)
   (display this)
   (newline))
-
-
 
 (define list-ref
   (lambda (list pos)
@@ -46,3 +44,25 @@
         [(eq? p 0) (if (pair? ls) (car ls) ls)]
         [(pair? list) (loop (cdr ls) (- p 1))]
         [else (eopl:error 'list-ref "list-ref failed at ~s ~s" list pos)]))))
+
+(define (flatten implst)
+  (if (list? implst)
+      implst
+      (let loop ([implst implst])
+        (if (pair? implst)
+            (cons (car implst) (loop (cdr implst)))
+            (cons implst '())))))
+
+(define list-find-position
+  (lambda (sym los)
+    (list-index (lambda (xsym) (eqv? sym xsym)) (flatten los))))
+
+(define list-index
+  (lambda (pred ls)
+    (cond
+      ((null? ls) #f)
+      ((pred (car ls)) 0)
+      (else (let ((list-index-r (list-index pred (cdr ls))))
+              (if (number? list-index-r)
+                  (+ 1 list-index-r)
+                  #f))))))

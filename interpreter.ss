@@ -30,11 +30,11 @@
                 (void)))]
       [let-exp (var exp body)
         (let ([extended-env
-                (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+                (extend-env var (mapIO (lambda (x) (eval-exp x env)) exp) env)])
           (eval-bodies body extended-env))]
       [let*-exp (var exp body) ; Same as let because our modified map guarantees left->right
         (let ([extended-env
-                (extend-env var (map (lambda (x) (eval-exp x env)) exp) env)])
+                (extend-env var (mapIO (lambda (x) (eval-exp x env)) exp) env)])
           (eval-bodies body extended-env))]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
@@ -63,7 +63,7 @@
 
 (define eval-rands
   (lambda (rands env)
-    (map (lambda (x) (eval-exp x env)) rands)))
+    (mapIO (lambda (x) (eval-exp x env)) rands)))
 
 ;; evaluate the list of bodies, returning the last result
 ;; This works because our new map guarantees left->right
@@ -116,7 +116,7 @@
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
     *prim-proc-names*   ;  a value (not an expression) with an identifier.
-    (map prim-proc      
+    (mapIO prim-proc      
       *prim-proc-names*)
     (empty-env)))
 
@@ -124,7 +124,7 @@
   (lambda () (set! init-env         ; for now, our initial global environment only contains 
           (extend-env            ; procedure names.  Recall that an environment associates
             *prim-proc-names*   ;  a value (not an expression) with an identifier.
-            (map prim-proc *prim-proc-names*)
+            (mapIO prim-proc *prim-proc-names*)
             (empty-env)))))
 
 ;; Usually an interpreter must define each 

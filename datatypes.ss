@@ -10,7 +10,6 @@
     (bodiess (list-of (list-of expression?)))
     (env environment?)))
 
-
 ;; Parsed expression datatypes
 
 (define-datatype expression expression?
@@ -20,7 +19,8 @@
     (val is-literal?)]
   ;; for defined variables
   [var-exp
-    (id symbol?)]
+    (pos number?)
+    (layer (lambda (x) (or (number? x) (symbol? x))))]
   ;; lambda has a few cases
   ;; (lambda (vars) bodies)
   ;; (lambda var bodies)
@@ -52,7 +52,7 @@
     (exp (list-of expression?))
     (body (list-of expression?))]
   [set!-exp
-    (var symbol?)
+    (var (pair-of? number?))
     (val expression?)]
   [if-exp
     (con expression?)

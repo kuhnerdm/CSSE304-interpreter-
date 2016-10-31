@@ -21,22 +21,38 @@
 (define 4th cadddr)
 
 (define toLet-exp
-  (lambda (datum name exp)
+  (lambda (datum definedVars name exp)
     (if (and (list? (2nd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (2nd datum)))
         (if (for-all (lambda (x) (symbol? (car x))) (2nd datum))
             (if (> (length datum) 2)
-                (exp (map car (2nd datum))
-                  (map (lambda (x) (parse-exp (2nd x))) (2nd datum))
-                  (map parse-exp (cddr datum)))
+                (let ([decVars (mapIO car (2nd datum))]) 
+                  (exp decVars
+                    (mapIO (lambda (x) (parse-exp (2nd x) definedVars)) (2nd datum))
+                    (mapIO (parse-exp-mapIO (cons decVars definedVars)) (cddr datum))))
                 (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" name datum))
             (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" name datum))
         (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" name datum))))
 
+(define get-lexical
+  (lambda (sym curVars)
+    (let loop ([curVars curVars] [layer 0])
+      (if (null? curVars)
+          (cons -1 sym) ;; check in globals, then fail with elop error or something
+          (let ([pos (list-find-position sym (car curVars))])
+            (if (number? pos)
+                (cons pos layer)
+                (loop (cdr curVars) (+ 1 layer))))))))
+
+(define (parse-exp-mapIO definedVars)
+  (lambda (exp)
+    (parse-exp exp definedVars)))
 
 (define parse-exp         
-  (lambda (datum)
+  (lambda (datum definedVars)
     (cond
-      [(symbol? datum) (var-exp datum)]
+      [(symbol? datum)
+       (let ([lexAddr (get-lexical datum definedVars)])
+         (var-exp (car lexAddr) (cdr lexAddr)))]
       [(number? datum) (lit-exp datum)]
       [(string? datum) (lit-exp datum)]
       [(is-quoted-list? datum) (lit-exp (cadr datum))]
@@ -57,11 +73,14 @@
             [else ; (lambda [something] y ...)
               (cond
                 [(symbol? (2nd datum)) ; (lambda x y ...)
-                 (lambda-exp-sym (2nd datum) (map parse-exp (cddr datum)))]
+                 (lambda-exp-sym (2nd datum)
+                   (mapIO (parse-exp-mapIO (cons (list (2nd datum)) definedVars)) (cddr datum)))]
                 [((list-of symbol?) (2nd datum)) ; (lambda (x y z) q ...)
-                 (lambda-exp-list (2nd datum) (map parse-exp (cddr datum)))]
+                 (lambda-exp-list (2nd datum)
+                   (mapIO (parse-exp-mapIO (cons (2nd datum) definedVars)) (cddr datum)))]
                 [(and (pair? (2nd datum)) (not (list? (2nd datum)))) ; (lambda (x y . z) q ...)
-                 (lambda-exp-improper (2nd datum) (map parse-exp (cddr datum)))]
+                 (lambda-exp-improper (2nd datum)
+                   (mapIO (parse-exp-mapIO (cons (flatten (2nd datum)) definedVars)) (cddr datum)))]
                 [else (eopl:error 'parse-exp "bad lambda: bad types for arguments ~s" datum)])])]
          [(eqv? (car datum) 'let) ;; (let ([pairs]) bodies)
           (if (symbol? (2nd datum))
@@ -69,27 +88,36 @@
               (if (and (list? (3rd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (3rd datum)))
                   (if (for-all (lambda (x) (symbol? (car x))) (3rd datum))
                       (if (> (length datum) 3)
-                          (namedlet-exp (2nd datum)
-                            (map car (3rd datum))
-                            (map (lambda (x) (parse-exp (2nd x))) (3rd datum))
-                            (map parse-exp (cdddr datum)))
+                          (let ([decvars (mapIO car (3rd datum))])
+                            (namedlet-exp (2nd datum)
+                              decvars
+                              (mapIO (lambda (x) (parse-exp (2nd x) definedVars)) (3rd datum))
+                              (mapIO
+                                (parse-exp-mapIO
+                                  (cons (list (2nd datum)) (cons decvars definedVars)))
+                                (cdddr datum))))
                           (eopl:error 'parse-exp "Bad named let: wrong length (no bodies or vars): ~s" datum))
                       (eopl:error 'parse-exp "Bad named let: improper var definition (not a symbol): ~s" datum))
                   (eopl:error 'parse-exp "Bad named let: improper var definition (not a touple): ~s" datum))
               ;; unnamed let
-              (toLet-exp datum 'let let-exp))]
+              (toLet-exp datum definedVars 'let let-exp))]
          ;; other lets
          [(eqv? (car datum) 'let*)
-          (toLet-exp datum 'let* let*-exp)]
+          (toLet-exp datum definedVars 'let* let*-exp)]
          [(eqv? (car datum) 'letrec)
           (if (and (list? (2nd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (2nd datum)))
               (if (for-all (lambda (x) (symbol? (car x))) (2nd datum))
                   (if (> (length datum) 2)
-                      (letrec-exp
-                        (map car (cadr datum)) ; Proc names
-                        (map cadadr (cadr datum)) ; idss
-                        (map (lambda (x) (map parse-exp (cddadr x))) (cadr datum)) ; bodiess
-                        (map parse-exp (cddr datum))) ; letrec-bodies
+                      (let ([proc-names (mapIO car (cadr datum))] [idss (mapIO cadadr (cadr datum))])
+                        (letrec-exp
+                          proc-names ; Proc names
+                          idss ; idss
+                          (map (lambda (proc-name ids x)
+                                 (mapIO
+                                   (parse-exp-mapIO (cons ids (cons proc-name definedVars)))
+                                   (cddadr x)))
+                            proc-names idss (cadr datum)) ; bodiess
+                          (mapIO (parse-exp-mapIO (cons proc-names definedVars)) (cddr datum)))) ; letrec-bodies
                       (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" 'letrec datum))
                   (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" 'letrec datum))
               (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" 'letrec datum))]
@@ -97,22 +125,26 @@
          [(eqv? (car datum) 'set!)
           (if (eq? (length datum) 3)
               (if (symbol? (2nd datum))
-                  (set!-exp (2nd datum) (parse-exp (3rd datum)))
+                  (set!-exp (get-lexical (2nd datum) definedVars) (parse-exp (3rd datum) definedVars))
                   (eopl:error 'parse-exp "Bad set!: not setting var: ~s" datum))
               (eopl:error 'parse-exp "Bad set!: too many or too few arguments: ~s" datum))]
          ;; (if pred true false)
          [(eqv? (car datum) 'if)
           (cond
             [(eq? (length datum) 3)
-             (if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) '())]
+             (if-exp (parse-exp (2nd datum) definedVars)
+               (parse-exp (3rd datum) definedVars)
+               '())]
             [(eq? (length datum) 4)
-             (if-exp (parse-exp (2nd datum)) (parse-exp (3rd datum)) (parse-exp (4th datum)))]
+             (if-exp (parse-exp (2nd datum) definedVars)
+               (parse-exp (3rd datum) definedVars)
+               (parse-exp (4th datum) definedVars))]
             [else (eopl:error 'parse-exp "Bad if: too many or two few argumetns: ~s" datum)])]
          [(eqv? (car datum) 'define)
-          (define-exp (2nd datum) (parse-exp (3rd datum)))]
+          (define-exp (2nd datum) (parse-exp (3rd datum) definedVars))]
          [(list? datum)
-          (app-exp (parse-exp (1st datum))
-            (map parse-exp (cdr datum)))]
+          (app-exp (parse-exp (1st datum) definedVars)
+            (mapIO (parse-exp-mapIO definedVars) (cdr datum)))]
          [else
            (eopl:error 'parse-exp "Bad expression, not a proper list: ~s" datum)])]
       [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -122,21 +154,21 @@
     [lit-exp (val) (list 'quote val)]
     [var-exp (id) id]
     [lambda-exp-list (vars body)
-      (cons 'lambda (cons vars (map unparse-exp body)))]
+      (cons 'lambda (cons vars (mapIO unparse-exp body)))]
     [lambda-exp-sym (vars body)
-      (cons 'lambda (cons vars (map unparse-exp body)))]
+      (cons 'lambda (cons vars (mapIO unparse-exp body)))]
     [lambda-exp-improper (vars body)
-      (cons 'lambda (cons vars (map unparse-exp body)))]
+      (cons 'lambda (cons vars (mapIO unparse-exp body)))]
     [app-exp (rator rands)
-      (cons (unparse-exp rator) (map unparse-exp rands))]
+      (cons (unparse-exp rator) (mapIO unparse-exp rands))]
     [let-exp (var exp body)
-      (append (list 'let (map list var (map unparse-exp exp))) (map unparse-exp body))]
+      (append (list 'let (mapIO list var (mapIO unparse-exp exp))) (mapIO unparse-exp body))]
     [let*-exp (var exp body)
-      (append (list 'let* (map list var (map unparse-exp exp))) (map unparse-exp body))]
+      (append (list 'let* (mapIO list var (mapIO unparse-exp exp))) (mapIO unparse-exp body))]
     [letrec-exp (var exp body)
-      (append (list 'letrec (map list var (map unparse-exp exp))) (map unparse-exp body))]
+      (append (list 'letrec (mapIO list var (mapIO unparse-exp exp))) (mapIO unparse-exp body))]
     [namedlet-exp (name var exp body)
-      (append (list 'let name (map list var (map unparse-exp exp))) (map unparse-exp body))]
+      (append (list 'let name (mapIO list var (mapIO unparse-exp exp))) (mapIO unparse-exp body))]
     [set!-exp (var val)
       (append (list 'set! var (unparse-exp val)))]
     [if-exp (con thn els)
@@ -186,7 +218,7 @@
                  (syntax-expand (cadr (get-rator-rands (car rands))))
                  (syntax-expand (app-exp (var-exp 'cond) (cdr rands))))])]
           [(equal? rator (var-exp 'begin))
-           (app-exp (lambda-exp-list '() (map syntax-expand rands)) '())]
+           (app-exp (lambda-exp-list '() (mapIO syntax-expand rands)) '())]
           [(equal? rator (var-exp 'and))
            (if (null? (cdr rands))
                (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
@@ -198,27 +230,27 @@
                    (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
           [(equal? rator (var-exp 'while))
            (letrec-exp '(mainWhileLoop)
-             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (map syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
+             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (mapIO syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
              (list (app-exp (var-exp 'mainWhileLoop) '())))]
-          [else (app-exp rator (map syntax-expand rands))])]
+          [else (app-exp rator (mapIO syntax-expand rands))])]
       [lit-exp (val) datum]
       [var-exp (id) datum]
       [lambda-exp-list (vars body)
-        (lambda-exp-list vars (map syntax-expand body))]
+        (lambda-exp-list vars (mapIO syntax-expand body))]
       [lambda-exp-sym (vars body)
-        (lambda-exp-sym vars (map syntax-expand body))]
+        (lambda-exp-sym vars (mapIO syntax-expand body))]
       [lambda-exp-improper (vars body)
-        (lambda-exp-improper vars (map syntax-expand body))]
+        (lambda-exp-improper vars (mapIO syntax-expand body))]
       [let-exp (var exp body)
-        (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
+        (app-exp (lambda-exp-list var (mapIO syntax-expand body)) (mapIO syntax-expand exp))]
       [let*-exp (var exp body)
         (cond 
-          [(null? var) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
-          [(null? (cdr var)) (app-exp (lambda-exp-list var (map syntax-expand body)) (map syntax-expand exp))]
+          [(null? var) (app-exp (lambda-exp-list var (mapIO syntax-expand body)) (mapIO syntax-expand exp))]
+          [(null? (cdr var)) (app-exp (lambda-exp-list var (mapIO syntax-expand body)) (mapIO syntax-expand exp))]
           [else (syntax-expand
                   (app-exp (lambda-exp-list (list (car var)) (list (syntax-expand (let*-exp (cdr var) (cdr exp) body)))) (list (syntax-expand (car exp)))))])]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
-        (letrec-exp proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess) (map syntax-expand letrec-bodies))]
+        (letrec-exp proc-names idss (mapIO (lambda (x) (mapIO syntax-expand x)) bodiess) (mapIO syntax-expand letrec-bodies))]
       [namedlet-exp (name var exp body)
         (syntax-expand (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp))))]
       [set!-exp (var val)

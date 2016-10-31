@@ -15,28 +15,6 @@
 
 (define set-ref! set-box!)
 
-(define (flatten implst)
-  (if (list? implst)
-      implst
-      (let loop ([implst implst])
-        (if (pair? implst)
-            (cons (car implst) (loop (cdr implst)))
-            (cons implst '())))))
-
-(define list-find-position
-  (lambda (sym los)
-    (list-index (lambda (xsym) (eqv? sym xsym)) (flatten los))))
-
-(define list-index
-  (lambda (pred ls)
-    (cond
-      ((null? ls) #f)
-      ((pred (car ls)) 0)
-      (else (let ((list-index-r (list-index pred (cdr ls))))
-              (if (number? list-index-r)
-                  (+ 1 list-index-r)
-                  #f))))))
-
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are procedures applied if the var is or isn't found, respectively.
     (cases environment env
