@@ -179,7 +179,7 @@
     (cases expression datum
       [lit-exp (val)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
-      [var-exp (id)
+      [var-exp (pos layer)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
       [lambda-exp-list (vars body)
         (eopl:error 'syntax-expand "Bad expansion, get-rator-rands detected ~s" datum)]
@@ -228,13 +228,13 @@
                (if (null? (cdr rands))
                    (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
                    (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
-          [(equal? rator (var-exp 'while))
+          [(equal? rator (var-exp 'while)) ;; while
            (letrec-exp '(mainWhileLoop)
              (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (mapIO syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
              (list (app-exp (var-exp 'mainWhileLoop) '())))]
           [else (app-exp rator (mapIO syntax-expand rands))])]
       [lit-exp (val) datum]
-      [var-exp (id) datum]
+      [var-exp (pos layer) datum]
       [lambda-exp-list (vars body)
         (lambda-exp-list vars (mapIO syntax-expand body))]
       [lambda-exp-sym (vars body)
@@ -252,7 +252,7 @@
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (letrec-exp proc-names idss (mapIO (lambda (x) (mapIO syntax-expand x)) bodiess) (mapIO syntax-expand letrec-bodies))]
       [namedlet-exp (name var exp body)
-        (syntax-expand (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp))))]
+        (syntax-expand (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp 0 0) exp))))]
       [set!-exp (var val)
         (set!-exp var (syntax-expand val))]
       [if-exp (con thn els)

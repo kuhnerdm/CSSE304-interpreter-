@@ -52,7 +52,7 @@
     (exp (list-of expression?))
     (body (list-of expression?))]
   [set!-exp
-    (var (pair-of number?))
+    (var (lambda (x) (and (number? (car x)) (or (number? (cdr x)) (symbol? x)))))
     (val expression?)]
   [if-exp
     (con expression?)
