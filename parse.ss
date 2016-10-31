@@ -208,30 +208,30 @@
     (cases expression datum
       [app-exp (rator rands)
         (cond
-          [(equal? rator (var-exp 'cond))
+          [(eqv? (caddr rator) 'cond)
            (cond
-             [(equal? (car (get-rator-rands (car rands))) (var-exp 'else)) (syntax-expand (cadr (get-rator-rands (car rands))))]
+             [(equal? (car (get-rator-rands (car rands))) (var-exp -1 'else)) (syntax-expand (cadr (get-rator-rands (car rands))))]
              [(null? (cdr rands))
               (if-exp (syntax-expand (car (get-rator-rands (car rands)))) (syntax-expand (cadr (get-rator-rands (car rands)))) '())]
              [else
                (if-exp (syntax-expand (car (get-rator-rands (car rands))))
                  (syntax-expand (cadr (get-rator-rands (car rands))))
-                 (syntax-expand (app-exp (var-exp 'cond) (cdr rands))))])]
-          [(equal? rator (var-exp 'begin))
+                 (syntax-expand (app-exp (var-exp -1 'cond) (cdr rands))))])]
+          [(eqv? (caddr rator) 'begin)
            (app-exp (lambda-exp-list '() (mapIO syntax-expand rands)) '())]
-          [(equal? rator (var-exp 'and))
+          [(eqv? (caddr rator) 'and)
            (if (null? (cdr rands))
-               (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
-               (if-exp (car rands) (syntax-expand (app-exp (var-exp 'and) (cdr rands))) (lit-exp #f)))]
-          [(equal? rator (var-exp 'or))
+               (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 0 0) (var-exp 0 0) (lit-exp #f)))) (list (syntax-expand (car rands))))
+               (if-exp (car rands) (syntax-expand (app-exp (var-exp -1 'and) (cdr rands))) (lit-exp #f)))]
+          [(equal? (caddr rator) 'or)
            (if (null? rands) (lit-exp #f)
                (if (null? (cdr rands))
-                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))
-                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
-          [(equal? rator (var-exp 'while)) ;; while
+                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 0 0) (var-exp 0 0) (lit-exp #f)))) (list (syntax-expand (car rands))))
+                   (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 0 0) (var-exp 0 0) (syntax-expand (app-exp (var-exp -1 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
+          [(eqv? (caddr rator) 'while) ;; while
            (letrec-exp '(mainWhileLoop)
-             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (mapIO syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
-             (list (app-exp (var-exp 'mainWhileLoop) '())))]
+             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (mapIO syntax-expand (append (cdr rands) (list (app-exp (var-exp 0 1) '()))))) '()) '()))))
+             (list (app-exp (var-exp -1 'mainWhileLoop) '())))]
           [else (app-exp rator (mapIO syntax-expand rands))])]
       [lit-exp (val) datum]
       [var-exp (pos layer) datum]

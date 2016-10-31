@@ -25,7 +25,7 @@
           (succeed (apply-env-ref init-env offset depth (lambda (v) v) fail))
           (if (equal? 0 depth) ; Current env
             (succeed (list-ref vals offset))
-            (apply-env-ref env offset (- depth 1) succeed fail)))
+            (apply-env-ref env offset (- depth 1) succeed fail))))
       (recursively-extended-env-record (procnames idss bodiess old-env)
         (if (equal? -1 depth)
           (succeed (apply-env-ref init-env offset depth (lambda (v) v) fail))
@@ -36,8 +36,8 @@
                 env)))
               (succeed (box (closure-pair (list-ref idss offset)
                 (list-ref bodiess offset)
-                env)))
-            (apply-env-ref old-env offset (- depth 1) succeed fail)))))))))
+                env))))
+            (apply-env-ref old-env offset (- depth 1) succeed fail)))))))
 
 (define apply-env
   (lambda (env offset depth succeed fail)

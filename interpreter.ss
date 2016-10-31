@@ -11,8 +11,8 @@
   (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
-      [var-exp (id)
-        (apply-env env id; look up its value.
+      [var-exp (offset depth)
+        (apply-env env offset depth; look up its value.
           (lambda (x) x) ; procedure to call if id is in the environment 
           (lambda () (apply-env init-env id 
                        (lambda (x) x) 
@@ -47,9 +47,9 @@
         (closure-pair id body env)]
       [set!-exp (var val)
         (set-ref!
-          (apply-env-ref env var
+          (apply-env-ref env (car var) (cdr var)
             (lambda (v) v) ; success
-            (lambda () (apply-env-ref init-env var
+            (lambda () (apply-env-ref init-env (car var) (cdr var)
                          (lambda (x) x) 
                          (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
                                       "variable not found in environment: ~s" id)))))
@@ -202,7 +202,7 @@
   (lambda ()
     (display "--> ")
     ;; notice that we don't save changes to the environment...
-    (letrec ([answer (top-level-eval (syntax-expand (parse-exp (read))))]
+    (letrec ([answer (top-level-eval (syntax-expand (parse-exp (read) '())))]
              [loop
                (lambda (val)
                  (cond
@@ -215,7 +215,7 @@
     (rep)))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x '())))))
 
 
 
