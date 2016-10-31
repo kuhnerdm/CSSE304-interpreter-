@@ -3,7 +3,7 @@
 (define top-level-eval
   (lambda (form)
     ;; later we may add things that are not expressions.
-    (eval-exp form (empty-env))))
+      (eval-exp form (empty-env))))
 
 ;; eval-exp is the main component of the interpreter
 
@@ -55,8 +55,8 @@
                                       "variable not found in environment: ~s" id)))))
           (eval-exp val env))]
       [define-exp (var val)
-        (set-car! (cdr init-env) (append (cadr init-env) var))
-        (set-car! (cddr init-env) (append (caddr init-env) (eval-exp val env)))]
+        (set-car! (cdr init-env) (append (cadr init-env) (list var)))
+        (set-car! (cddr init-env) (append (caddr init-env) (list (box (eval-exp val env)))))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -119,6 +119,13 @@
     (map prim-proc      
       *prim-proc-names*)
     (empty-env)))
+
+(define reset-global-env
+  (lambda () (set! init-env         ; for now, our initial global environment only contains 
+          (extend-env            ; procedure names.  Recall that an environment associates
+            *prim-proc-names*   ;  a value (not an expression) with an identifier.
+            (map prim-proc *prim-proc-names*)
+            (empty-env)))))
 
 ;; Usually an interpreter must define each 
 ;; built-in procedure individually.  We are "cheating" a little bit.
