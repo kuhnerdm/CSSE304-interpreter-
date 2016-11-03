@@ -131,7 +131,12 @@
   [car-reverse-k]
   [map-k
     (proc proc-val?)
-    (rands (list-of expression?))])
+    (rands (list-of expression?))]
+  [define-k]
+  [if-k
+    (thn expression?)
+    (els expression?)
+    (env environment?)])
 
 (define apply-k
   (lambda (k v)
@@ -139,7 +144,7 @@
       (cases kontinuation k
         [eval-rands-k (env rands)
           (if (null? rands)
-            (cons v (eval-rands rands env '())
+            (cons v (eval-rands rands env '()))
             (cons v (eval-rands rands env (eval-rands-k env (cdr rands)))))]
         [app-rator-k (env rands)
           (eval-rands rands env (app-rands-k env v))]
@@ -149,6 +154,14 @@
           (car (reverse v))]
         [map-k (proc rands)
           (if (null? rands)
-            (cons (apply-proc proc (list (car rands)) '())
-            (cons (apply-proc proc (list (car rands)) (map-k proc (cdr rands)))))]
-      v))
+            (cons v (apply-proc proc (list (car rands)) '()))
+            (cons v (apply-proc proc (list (car rands)) (map-k proc (cdr rands)))))]
+        [define-k ()
+          (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))]
+        [if-k (thn els env)
+          (if v
+              (eval-exp thn env '())
+              (if (null? els)
+                  (void)
+                  (eval-exp els env '())))]
+      v))))

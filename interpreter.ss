@@ -12,29 +12,25 @@
     (cases expression exp
       [lit-exp (datum) (apply-k k datum)]
       [var-exp (id)
-        (apply-k k (apply-env env id; look up its value.
-          (lambda (x) x) ; procedure to call if id is in the environment 
+        (apply-k k (apply-env env id
+          (lambda (x) x) 
           (lambda () (apply-env init-env id 
                        (lambda (x) x) 
-                       (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
+                       (lambda () (eopl:error 'apply-env 
                                     "variable not found in environment: ~s" id))))))] 
       [app-exp (rator rands)
         (apply-k k (eval-exp rator env (app-rator-k env rands)))]
       [if-exp (con thn els)
-        (if (eval-exp con env)
-            (eval-exp thn env)
-            (if (not (null? els))
-                (eval-exp els env)
-                (void)))]
+        (apply k (eval-exp con env (if-k thn els env)))
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
-          (extend-env-recursively proc-names idss bodiess env))]
-      [lambda-exp-list (id body) ;; there is probably a way to clean this up a bit more than this
-        (closure id body env)] ; but this will also work and I think it fits into the rest of the 
-      [lambda-exp-sym (id body) ; assignments
-        (closure-alt id body env)]
+          (extend-env-recursively proc-names idss bodiess env) k)]
+      [lambda-exp-list (id body)
+        (apply-k k (closure id body env))] 
+      [lambda-exp-sym (id body)
+        (apply-k k (closure-alt id body env))]
       [lambda-exp-improper (id body)
-        (closure-pair id body env)]
+        (apply-k k (closure-pair id body env))]
       [set!-exp (var val)
         (set-ref!
           (apply-env-ref env var
@@ -46,7 +42,7 @@
           (eval-exp val env))]
       [define-exp (var val)
         (set-car! (cdr init-env) (append (cadr init-env) (list var)))
-        (set-car! (cddr init-env) (append (caddr init-env) (list (box (eval-exp val env)))))]
+        (eval-exp val env (define-k))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
