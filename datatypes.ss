@@ -118,3 +118,37 @@
 (define scheme-value?
   (lambda (x) #t))
 
+(define-datatype kontinuation kontinuation?
+  [eval-rands-k
+    (env environment?)
+    (rands (list-of expression?))]
+  [app-rator-k
+    (env environment?)
+    (rands (list-of expression?))]
+  [app-rands-k
+    (env environment?)
+    (rator (proc-val?))]
+  [car-reverse-k]
+  [map-k
+    (proc proc-val?)
+    (rands (list-of expression?))])
+
+(define apply-k
+  (lambda (k v)
+    (if (kontinuation? k)
+      (cases kontinuation k
+        [eval-rands-k (env rands)
+          (if (null? rands)
+            (cons v (eval-rands rands env '())
+            (cons v (eval-rands rands env (eval-rands-k env (cdr rands)))))]
+        [app-rator-k (env rands)
+          (eval-rands rands env (app-rands-k env v))]
+        [app-rands-k (env rator)
+          (apply-proc rator v)]
+        [car-reverse-k ()
+          (car (reverse v))]
+        [map-k (proc rands)
+          (if (null? rands)
+            (cons (apply-proc proc (list (car rands)) '())
+            (cons (apply-proc proc (list (car rands)) (map-k proc (cdr rands)))))]
+      v))

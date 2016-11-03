@@ -6,8 +6,8 @@
   (find (lambda (x) (eqv? x val)) ls))
 
 ;; map that will always run in order from left to right
-(define (map proc ls)
-  (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls)))
+(define (map proc ls k)
+  (apply-k k (reverse (fold-left (lambda (prev next) (cons (proc next) prev)) '() ls))))
 
 ;; for the lambda with an improper list
 (define (pairs-of proc)

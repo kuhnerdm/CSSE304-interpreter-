@@ -1,0 +1,3 @@
+ls ="+ - * / add1 sub1 cons = zero? not < > <= >= != car cdr null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr quotient list-tail append eqv? newline display".split()
+for item in ls:
+	print("[({}) (apply-k k (apply {} args))]".format(item, item))
