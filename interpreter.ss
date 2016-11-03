@@ -21,7 +21,7 @@
       [app-exp (rator rands)
         (apply-k k (eval-exp rator env (app-rator-k env rands)))]
       [if-exp (con thn els)
-        (apply k (eval-exp con env (if-k thn els env)))
+        (apply-k k (eval-exp con env (if-k thn els env)))
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
           (extend-env-recursively proc-names idss bodiess env) k)]
@@ -32,14 +32,7 @@
       [lambda-exp-improper (id body)
         (apply-k k (closure-pair id body env))]
       [set!-exp (var val)
-        (set-ref!
-          (apply-env-ref env var
-            (lambda (v) v) ; success
-            (lambda () (apply-env-ref init-env var
-                         (lambda (x) x) 
-                         (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-                                      "variable not found in environment: ~s" id)))))
-          (eval-exp val env))]
+        (apply-k k (eval-exp val env (set!-k env var)))]
       [define-exp (var val)
         (set-car! (cdr init-env) (append (cadr init-env) (list var)))
         (eval-exp val env (define-k))]
@@ -58,7 +51,7 @@
 
 (define eval-bodies
   (lambda (bodies env k)
-    (eval-rands bodies env (car-reverse-k k))))
+    (eval-rands bodies env (car-reverse-k))))
 
 ;;  Apply a procedure to its arguments.
 ;;  At this point, we only have primitive procedures.  

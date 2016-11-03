@@ -127,7 +127,7 @@
     (rands (list-of expression?))]
   [app-rands-k
     (env environment?)
-    (rator (proc-val?))]
+    (rator proc-val?)]
   [car-reverse-k]
   [map-k
     (proc proc-val?)
@@ -136,7 +136,10 @@
   [if-k
     (thn expression?)
     (els expression?)
-    (env environment?)])
+    (env environment?)]
+  [set!-k
+    (env environment?)
+    (var symbol?)])
 
 (define apply-k
   (lambda (k v)
@@ -149,7 +152,7 @@
         [app-rator-k (env rands)
           (eval-rands rands env (app-rands-k env v))]
         [app-rands-k (env rator)
-          (apply-proc rator v)]
+          (apply-proc rator v '())]
         [car-reverse-k ()
           (car (reverse v))]
         [map-k (proc rands)
@@ -164,4 +167,13 @@
               (if (null? els)
                   (void)
                   (eval-exp els env '())))]
-      v))))
+        [set!-k (env var)
+          (set-ref!
+            (apply-env-ref env var
+              (lambda (v) v)
+              (lambda () (apply-env-ref init-env var
+                           (lambda (x) x) 
+                           (lambda () (eopl:error 'apply-env
+                                        "variable not found in environment: ~s" var)))))
+            v)])
+      v)))
