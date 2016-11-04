@@ -139,7 +139,9 @@
     (env environment?)]
   [set!-k
     (env environment?)
-    (var symbol?)])
+    (var symbol?)]
+  [init-env-k]
+  [reset-env-k])
 
 (define apply-k
   (lambda (k v)
@@ -175,5 +177,9 @@
                            (lambda (x) x) 
                            (lambda () (eopl:error 'apply-env
                                         "variable not found in environment: ~s" var)))))
-            v)])
+            v)]
+        [init-env-k ()
+          (extend-env *prim-proc-names* v (empty-env))]
+        [reset-env-k ()
+          (set! init-env (extend-env *prim-proc-names* v (empty-env)))])
       v)))

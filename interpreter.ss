@@ -3,7 +3,7 @@
 (define top-level-eval
   (lambda (form)
     ;; later we may add things that are not expressions.
-      (eval-exp form (empty-env))))
+    (eval-exp form (empty-env) '())))
 
 ;; eval-exp is the main component of the interpreter
 
@@ -13,15 +13,15 @@
       [lit-exp (datum) (apply-k k datum)]
       [var-exp (id)
         (apply-k k (apply-env env id
-          (lambda (x) x) 
-          (lambda () (apply-env init-env id 
-                       (lambda (x) x) 
-                       (lambda () (eopl:error 'apply-env 
-                                    "variable not found in environment: ~s" id))))))] 
+                     (lambda (x) x) 
+                     (lambda () (apply-env init-env id 
+                                  (lambda (x) x) 
+                                  (lambda () (eopl:error 'apply-env 
+                                               "variable not found in environment: ~s" id))))))] 
       [app-exp (rator rands)
         (apply-k k (eval-exp rator env (app-rator-k env rands)))]
       [if-exp (con thn els)
-        (apply-k k (eval-exp con env (if-k thn els env)))
+        (apply-k k (eval-exp con env (if-k thn els env)))]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
           (extend-env-recursively proc-names idss bodiess env) k)]
@@ -43,15 +43,15 @@
 (define eval-rands
   (lambda (rands env k)
     (if (null? rands)
-      (apply-k k rands)
-      (apply-k k (eval-exp (car rands) env (eval-rands-k env (cdr rands)))))))
+        (apply-k k rands)
+        (apply-k k (eval-exp (car rands) env (eval-rands-k env (cdr rands)))))))
 
 ;; evaluate the list of bodies, returning the last result
 ;; This works because our new map guarantees left->right
 
 (define eval-bodies
   (lambda (bodies env k)
-    (eval-rands bodies env (car-reverse-k))))
+    (apply-k k (eval-rands bodies env (car-reverse-k)))))
 
 ;;  Apply a procedure to its arguments.
 ;;  At this point, we only have primitive procedures.  
@@ -94,19 +94,11 @@
 
 (define *prim-proc-names* '(list + - * / add1 sub1 cons = zero? not < > <= >= != car cdr null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map quotient list-tail append eqv? newline display))
 
-(define init-env         ; for now, our initial global environment only contains 
-  (extend-env            ; procedure names.  Recall that an environment associates
-    *prim-proc-names*   ;  a value (not an expression) with an identifier.
-    (map prim-proc      
-      *prim-proc-names*)
-    (empty-env)))
+(define init-env         
+  (map prim-proc *prim-proc-names* (init-env-k)))
 
 (define reset-global-env
-  (lambda () (set! init-env         ; for now, our initial global environment only contains 
-          (extend-env            ; procedure names.  Recall that an environment associates
-            *prim-proc-names*   ;  a value (not an expression) with an identifier.
-            (map prim-proc *prim-proc-names*)
-            (empty-env)))))
+  (lambda () (map prim-proc *prim-proc-names* (reset-env-k))))
 
 ;; Usually an interpreter must define each 
 ;; built-in procedure individually.  We are "cheating" a little bit.
@@ -176,12 +168,13 @@
       ;; assignment 14
       [(apply) (apply-proc (car args) (cadr args) k)]
       [(map)
-        (if (null? (cadr args))
-          (apply-k k (cadr args))
-          (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args)))))]
+       (if (null? (cadr args))
+           (apply-k k (cadr args))
+           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args)))))]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 
               prim-op)])))
+
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()
@@ -201,13 +194,5 @@
 
 (define eval-one-exp
   (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
-
-
-
-
-
-
-
-
 
 

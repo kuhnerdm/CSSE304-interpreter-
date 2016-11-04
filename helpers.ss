@@ -33,7 +33,7 @@
       (vector? x))))
 
 ;; makes inline debugging easier
-(define (debug this)
+(define (dbug this)
   (display this)
   (newline))
 
