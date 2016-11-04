@@ -10,7 +10,10 @@
 (define eval-exp
   (lambda (exp env k)
     (cases expression exp
-      [lit-exp (datum) (apply-k k datum)]
+      [lit-exp (datum)
+        (if (not (list? datum))
+          (apply-k k datum)
+          (apply-k k (map (lambda (x) (eval-exp x env '())) datum '())))]
       [var-exp (id)
         (apply-k k (apply-env env id
                      (lambda (x) x) 
@@ -170,7 +173,7 @@
       [(map)
        (if (null? (cadr args))
            (apply-k k (cadr args))
-           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args)))))]
+           (apply-k k (apply-proc (car args) (cadr args) (map-k (car args) (cdadr args)))))]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 
               prim-op)])))

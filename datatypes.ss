@@ -131,7 +131,7 @@
   [car-reverse-k]
   [map-k
     (proc proc-val?)
-    (rands (list-of expression?))]
+    (rands list?)]
   [define-k]
   [if-k
     (thn expression?)

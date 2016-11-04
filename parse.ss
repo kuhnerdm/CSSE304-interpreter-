@@ -39,7 +39,7 @@
       [(symbol? datum) (var-exp datum)]
       [(number? datum) (lit-exp datum)]
       [(string? datum) (lit-exp datum)]
-      [(is-quoted-list? datum) (lit-exp (cadr datum))]
+      [(is-quoted-list? datum) (lit-exp (map parse-exp (cadr datum) '()))]
       [(is-quoted-vector? datum) (lit-exp (cadr datum))]
       [(is-quoted-symbol? datum) (lit-exp (cadr datum))]
       [(boolean? datum) (lit-exp datum)]
