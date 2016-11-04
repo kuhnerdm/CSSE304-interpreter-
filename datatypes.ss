@@ -149,8 +149,8 @@
       (cases kontinuation k
         [eval-rands-k (env rands)
           (if (null? rands)
-            (cons v (eval-rands rands env '()))
-            (cons v (eval-rands rands env (eval-rands-k env (cdr rands)))))]
+              (list v)
+              (cons v (eval-rands rands env '())))]
         [app-rator-k (env rands)
           (eval-rands rands env (app-rands-k env v))]
         [app-rands-k (env rator)
