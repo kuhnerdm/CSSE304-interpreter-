@@ -25,9 +25,9 @@
     (if (and (list? (2nd datum)) (for-all (lambda (x) (and (list? x) (eq? (length x) 2))) (2nd datum)))
         (if (for-all (lambda (x) (symbol? (car x))) (2nd datum))
             (if (> (length datum) 2)
-                (exp (map car (2nd datum))
-                  (map (lambda (x) (parse-exp (2nd x))) (2nd datum))
-                  (map parse-exp (cddr datum)))
+                (exp (map car (2nd datum) '())
+                  (map (lambda (x) (parse-exp (2nd x))) (2nd datum) '())
+                  (map parse-exp (cddr datum) '()))
                 (eopl:error 'parse-exp "Bad ~s: wrong length (no bodies or vars): ~s" name datum))
             (eopl:error 'parse-exp "Bad ~s: improper var definition (not a symbol): ~s" name datum))
         (eopl:error 'parse-exp "Bad ~s: improper var definition (not a touple): ~s" name datum))))
@@ -173,7 +173,7 @@
                    (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (syntax-expand (app-exp (var-exp 'or) (cdr rands)))))) (list (syntax-expand (car rands))))))]
           [(equal? rator (var-exp 'while))
            (letrec-exp '(mainWhileLoop)
-             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (map syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))))) '()) '()))))
+             (list (lambda-exp-list '() (list (if-exp (syntax-expand (car rands)) (app-exp (lambda-exp-list '() (map syntax-expand (append (cdr rands) (list (app-exp (var-exp 'mainWhileLoop) '()))) '())) '()) '()))))
              (list (app-exp (var-exp 'mainWhileLoop) '())))]
           [else (app-exp rator (map syntax-expand rands '()))])]
       [lit-exp (val) datum]
@@ -193,7 +193,7 @@
           [else (syntax-expand
                   (app-exp (lambda-exp-list (list (car var)) (list (syntax-expand (let*-exp (cdr var) (cdr exp) body)))) (list (syntax-expand (car exp)))))])]
       [letrec-exp (proc-names idss bodiess letrec-bodies)
-        (letrec-exp proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess '()) (map syntax-expand letrec-bodies '()))]
+        (letrec-exp proc-names idss (map (lambda (x) (map syntax-expand x '())) bodiess '()) (map syntax-expand letrec-bodies '()))]
       [namedlet-exp (name var exp body)
         (syntax-expand (letrec-exp (list name) (list var) (list body) (list (app-exp (var-exp name) exp))))]
       [set!-exp (var val)
