@@ -135,7 +135,7 @@
   [define-k]
   [if-k
     (thn expression?)
-    (els expression?)
+    (els (lambda (x) (or (expression? x) (null? x))))
     (env environment?)]
   [set!-k
     (env environment?)
@@ -159,7 +159,7 @@
           (car (reverse v))]
         [map-k (proc rands)
           (if (null? rands)
-            (cons v (apply-proc proc (list (car rands)) '()))
+            (list v)
             (cons v (apply-proc proc (list (car rands)) (map-k proc (cdr rands)))))]
         [define-k ()
           (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))]
