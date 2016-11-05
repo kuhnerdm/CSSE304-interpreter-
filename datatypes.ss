@@ -141,7 +141,9 @@
     (env environment?)
     (var symbol?)]
   [init-env-k]
-  [reset-env-k])
+  [reset-env-k]
+  [cons-k
+    (1st scheme-value?)])
 
 (define apply-k
   (lambda (k v)
@@ -150,7 +152,7 @@
         [eval-rands-k (env rands)
           (if (null? rands)
               (list v)
-              (cons v (eval-rands rands env '())))]
+              (eval-rands rands env (cons-k v))]
         [app-rator-k (env rands)
           (eval-rands rands env (app-rands-k env v))]
         [app-rands-k (env rator)
@@ -181,5 +183,6 @@
         [init-env-k ()
           (extend-env *prim-proc-names* v (empty-env))]
         [reset-env-k ()
-          (set! init-env (extend-env *prim-proc-names* v (empty-env)))])
+          (set! init-env (extend-env *prim-proc-names* v (empty-env)))]
+        [cons-k (1st) (cons 1st v)])
       v)))
