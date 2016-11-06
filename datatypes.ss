@@ -80,7 +80,9 @@
   [closure-pair
     (arg (pairs-of symbol?))
     (body (list-of expression?))
-    (env environment?)])
+    (env environment?)]
+  [k-proc
+    (store kontinuation?)])
 
                                         ; ('prim-proc name)
                                         ; ('closure (args) (body) env)
@@ -142,21 +144,20 @@
     (var symbol?)]
   [init-env-k]
   [reset-env-k]
-  [cons-k
-    (1st scheme-value?)])
+  [ident-k] ; We didn't have time to make perfect CPS style code, and we wanted to get call/cc out as our priority.
+  )
 
 (define apply-k
   (lambda (k v)
-    (if (kontinuation? k)
       (cases kontinuation k
         [eval-rands-k (env rands)
           (if (null? rands)
               (list v)
-              (eval-rands rands env (cons-k v))]
+              (cons v (eval-rands rands env (ident-k))))]
         [app-rator-k (env rands)
           (eval-rands rands env (app-rands-k env v))]
         [app-rands-k (env rator)
-          (apply-proc rator v '())]
+          (apply-proc rator v (ident-k))]
         [car-reverse-k ()
           (car (reverse v))]
         [map-k (proc rands)
@@ -167,10 +168,10 @@
           (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))]
         [if-k (thn els env)
           (if v
-              (eval-exp thn env '())
+              (eval-exp thn env (ident-k))
               (if (null? els)
                   (void)
-                  (eval-exp els env '())))]
+                  (eval-exp els env (ident-k))))]
         [set!-k (env var)
           (set-ref!
             (apply-env-ref env var
@@ -184,5 +185,4 @@
           (extend-env *prim-proc-names* v (empty-env))]
         [reset-env-k ()
           (set! init-env (extend-env *prim-proc-names* v (empty-env)))]
-        [cons-k (1st) (cons 1st v)])
-      v)))
+        [else v])))

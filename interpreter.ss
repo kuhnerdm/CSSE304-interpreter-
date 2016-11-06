@@ -3,17 +3,14 @@
 (define top-level-eval
   (lambda (form)
     ;; later we may add things that are not expressions.
-    (eval-exp form (empty-env) '())))
+    (eval-exp form (empty-env) (ident-k))))
 
 ;; eval-exp is the main component of the interpreter
 
 (define eval-exp
   (lambda (exp env k)
     (cases expression exp
-      [lit-exp (datum)
-        (if (not (list? datum))
-          (apply-k k datum)
-          (apply-k k (map (lambda (x) (eval-exp x env '())) datum '())))]
+      [lit-exp (datum) (apply-k k datum)]
       [var-exp (id)
         (apply-k k (apply-env env id
                      (lambda (x) x) 
@@ -81,6 +78,8 @@
                          [else (list (reverse (cons var newVar)) (reverse (cons args newArgs)))]))]
                [extended-env (extend-env (car mapped-vars) (cadr mapped-vars) env)])
           (eval-bodies body extended-env k))]
+      [k-proc (stored-k)
+        (apply-k stored-k (car args))]
       [else (error 'apply-proc
               "Attempt to apply bad procedure: ~s" 
               proc-value)])))
@@ -95,7 +94,7 @@
   (lambda (x y)
     (eqv? x y)))
 
-(define *prim-proc-names* '(list + - * / add1 sub1 cons = zero? not < > <= >= != car cdr null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map quotient list-tail append eqv? newline display))
+(define *prim-proc-names* '(exit-list call/cc list + - * / add1 sub1 cons = zero? not < > <= >= != car cdr null? assq eq? equal? atom? length list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? symbol? set-car! set-cdr! vector-set! display newline caar cadr cdar cddr caaar caadr cadar caddr cdaar cdadr cddar cdddr apply map quotient list-tail append eqv? newline display))
 
 (define init-env         
   (map prim-proc *prim-proc-names* (init-env-k)))
@@ -168,12 +167,14 @@
       [(newline) (apply-k k (apply newline args))]
       [(display) (apply-k k (apply display args))]
       [(list) (apply-k k args)]
+      [(call/cc) (apply-proc (car args) (list (k-proc k)) k)]
       ;; assignment 14
       [(apply) (apply-proc (car args) (cadr args) k)]
       [(map)
        (if (null? (cadr args))
            (apply-k k (cadr args))
-           (apply-k k (apply-proc (car args) (cadr args) (map-k (car args) (cdadr args)))))]
+           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args)))))]
+      [(exit-list) (apply-prim-proc 'list args (ident-k))]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 
               prim-op)])))
