@@ -19,9 +19,10 @@
                                   (lambda () (eopl:error 'apply-env 
                                                "variable not found in environment: ~s" id))))))] 
       [app-exp (rator rands)
-        (apply-k k (eval-exp rator env (app-rator-k env rands)))]
+        ;;(apply-k k (eval-exp rator env (app-rator-k env rands)))] ;; this one needs to be fixed
+        (eval-exp rator env (app-proc-to-rands-k env rands k))]
       [if-exp (con thn els)
-        (apply-k k (eval-exp con env (if-k thn els env)))]
+        (apply-k k (eval-exp con env (if-k thn els env)))] ;; this one needs to be fixed
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
           (extend-env-recursively proc-names idss bodiess env) k)]
@@ -41,17 +42,17 @@
 ;; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands env k)
+  (lambda (rands evald env k)
     (if (null? rands)
         (apply-k k rands)
-        (apply-k k (eval-exp (car rands) env (eval-rands-k env (cdr rands)))))))
+        (eval-exp (car rands) env (eval-rands-k env (cdr rands) evald k)))))
 
 ;; evaluate the list of bodies, returning the last result
 ;; This works because our new map guarantees left->right
 
 (define eval-bodies
   (lambda (bodies env k)
-    (apply-k k (eval-rands bodies env (car-reverse-k)))))
+    (apply-k k (eval-rands bodies '() env (car-reverse-k)))))
 
 ;;  Apply a procedure to its arguments.
 ;;  At this point, we only have primitive procedures.  

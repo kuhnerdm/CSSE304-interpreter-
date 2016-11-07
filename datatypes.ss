@@ -123,13 +123,21 @@
 (define-datatype kontinuation kontinuation?
   [eval-rands-k
     (env environment?)
-    (rands (list-of expression?))]
+    (rands (list-of expression?))
+    (evald list?)
+    (pass-to kontinuation?)]
   [app-rator-k
     (env environment?)
-    (rands (list-of expression?))]
+    (rands (list-of expression?))
+    (pass-to kontinuation?)]
   [app-rands-k
     (env environment?)
-    (rator proc-val?)]
+    (rator proc-val?)
+    (pass-to kontinuation?)]
+  [app-proc-to-rands-k
+    (env environment?)
+    (rands (list-of expression?))
+    (pass-to kontinuation?)]
   [car-reverse-k]
   [map-k
     (proc proc-val?)
@@ -150,14 +158,17 @@
 (define apply-k
   (lambda (k v)
       (cases kontinuation k
-        [eval-rands-k (env rands)
+        [eval-rands-k (env rands evald pass-to)
           (if (null? rands)
-              (list v)
-              (cons v (eval-rands rands env (ident-k))))]
-        [app-rator-k (env rands)
-          (eval-rands rands env (app-rands-k env v))]
-        [app-rands-k (env rator)
-          (apply-proc rator v (ident-k))]
+              (apply-k pass-to (append evald (list v)))
+              ;;(cons v (eval-rands rands env pass-to)))]
+              (eval-rands rands (append evald (list v)) env pass-to))]
+        ;;[app-rator-k (env rands)
+        ;;  (eval-rands rands env (app-rands-k env v))]
+        [app-proc-to-rands-k (env rands pass-to)
+          (eval-rands rands '() env (app-rands-k env v pass-to))]
+        [app-rands-k (env rator pass-to)
+          (apply-proc rator v pass-to)]
         [car-reverse-k ()
           (car (reverse v))]
         [map-k (proc rands)
