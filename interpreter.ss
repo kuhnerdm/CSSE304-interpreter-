@@ -19,10 +19,9 @@
                                   (lambda () (eopl:error 'apply-env 
                                                "variable not found in environment: ~s" id))))))] 
       [app-exp (rator rands)
-        ;;(apply-k k (eval-exp rator env (app-rator-k env rands)))] ;; this one needs to be fixed
         (eval-exp rator env (app-proc-to-rands-k env rands k))]
       [if-exp (con thn els)
-        (apply-k k (eval-exp con env (if-k thn els env)))] ;; this one needs to be fixed
+        (eval-exp con env (if-k thn els env k))] ;; this one needs to be fixed
       [letrec-exp (proc-names idss bodiess letrec-bodies)
         (eval-bodies letrec-bodies
           (extend-env-recursively proc-names idss bodiess env) k)]
@@ -174,7 +173,7 @@
       [(map)
        (if (null? (cadr args))
            (apply-k k (cadr args))
-           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args)))))]
+           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args) '()))))]
       [(exit-list) (apply-prim-proc 'list args (ident-k))]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 

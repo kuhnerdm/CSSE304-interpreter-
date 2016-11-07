@@ -141,12 +141,14 @@
   [car-reverse-k]
   [map-k
     (proc proc-val?)
-    (rands list?)]
+    (rands list?)
+    (evald list?)]
   [define-k]
   [if-k
     (thn expression?)
     (els (lambda (x) (or (expression? x) (null? x))))
-    (env environment?)]
+    (env environment?)
+    (pass-to kontinuation?)]
   [set!-k
     (env environment?)
     (var symbol?)]
@@ -161,28 +163,25 @@
         [eval-rands-k (env rands evald pass-to)
           (if (null? rands)
               (apply-k pass-to (append evald (list v)))
-              ;;(cons v (eval-rands rands env pass-to)))]
               (eval-rands rands (append evald (list v)) env pass-to))]
-        ;;[app-rator-k (env rands)
-        ;;  (eval-rands rands env (app-rands-k env v))]
         [app-proc-to-rands-k (env rands pass-to)
           (eval-rands rands '() env (app-rands-k env v pass-to))]
         [app-rands-k (env rator pass-to)
           (apply-proc rator v pass-to)]
         [car-reverse-k ()
           (car (reverse v))]
-        [map-k (proc rands)
+        [map-k (proc rands evald)
           (if (null? rands)
             (list v)
-            (cons v (apply-proc proc (list (car rands)) (map-k proc (cdr rands)))))]
+            (apply-proc proc (list (car rands)) (map-k proc (cdr rands) (append evald (list v)))))]
         [define-k ()
           (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))]
-        [if-k (thn els env)
+        [if-k (thn els env pass-to)
           (if v
-              (eval-exp thn env (ident-k))
+              (eval-exp thn env pass-to)
               (if (null? els)
                   (void)
-                  (eval-exp els env (ident-k))))]
+                  (eval-exp els env pass-to)))]
         [set!-k (env var)
           (set-ref!
             (apply-env-ref env var
