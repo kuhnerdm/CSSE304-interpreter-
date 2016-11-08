@@ -172,7 +172,7 @@
       [(map)
        (if (null? (cadr args))
            (apply-k k (cadr args))
-           (apply-k k (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args) '()))))]
+           (apply-proc (car args) (caadr args) (map-k (car args) (cdadr args) '() k)))]
       [(exit-list) (apply-prim-proc 'list args (ident-k))]
       [else (error 'apply-prim-proc 
               "Bad primitive procedure name: ~s" 

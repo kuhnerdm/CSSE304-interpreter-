@@ -7,7 +7,14 @@
 (define extend-env
   (lambda (syms vals env)
     ;;(extended-env-record syms (map box vals (ident-k)) env)))
-    (map box vals (extended-env-k syms env))))
+    (apply-k (extended-env-k syms env) (box-this vals))))
+
+(define (box-this this)
+  (cond
+    [(null? this) this]
+    [(pair? this) (cons (box (car this)) (box-this (cdr this)))]
+    [else (list (box this))]))
+     
 
 (define deref
   (lambda (x)

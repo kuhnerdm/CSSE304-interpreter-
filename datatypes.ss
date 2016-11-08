@@ -143,7 +143,8 @@
   [map-k
     (proc proc-val?)
     (rands list?)
-    (evald list?)]
+    (evald list?)
+    (pass-to kontinuation?)]
   [define-k
     (var symbol?)
     (pass-to kontinuation?)]
@@ -175,10 +176,10 @@
           (apply-proc rator v pass-to)]
         [car-reverse-k (pass-to)
           (apply-k pass-to (car (reverse v)))]
-        [map-k (proc rands evald)
+        [map-k (proc rands evald pass-to)
           (if (null? rands)
-            (list v)
-            (apply-proc proc (list (car rands)) (map-k proc (cdr rands) (append evald (list v)))))]
+              (apply-k pass-to (append evald (list v)))
+              (apply-proc proc (list (car rands)) (map-k proc (cdr rands) (append evald (list v)) pass-to)))]
         [define-k (var pass-to)
           (apply-k pass-to
             (begin (set-car! (cdr init-env) (append (cadr init-env) (list var)))
