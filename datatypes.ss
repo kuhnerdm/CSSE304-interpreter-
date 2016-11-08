@@ -138,12 +138,15 @@
     (env environment?)
     (rands (list-of expression?))
     (pass-to kontinuation?)]
-  [car-reverse-k]
+  [car-reverse-k
+    (pass-to kontinuation?)]
   [map-k
     (proc proc-val?)
     (rands list?)
     (evald list?)]
-  [define-k]
+  [define-k
+    (var symbol?)
+    (pass-to kontinuation?)]
   [if-k
     (thn expression?)
     (els (lambda (x) (or (expression? x) (null? x))))
@@ -155,7 +158,9 @@
   [init-env-k]
   [reset-env-k]
   [ident-k] ; We didn't have time to make perfect CPS style code, and we wanted to get call/cc out as our priority.
-  )
+  [extended-env-k
+    (syms (list-of symbol?))
+    (env environment?)])
 
 (define apply-k
   (lambda (k v)
@@ -168,14 +173,16 @@
           (eval-rands rands '() env (app-rands-k env v pass-to))]
         [app-rands-k (env rator pass-to)
           (apply-proc rator v pass-to)]
-        [car-reverse-k ()
-          (car (reverse v))]
+        [car-reverse-k (pass-to)
+          (apply-k pass-to (car (reverse v)))]
         [map-k (proc rands evald)
           (if (null? rands)
             (list v)
             (apply-proc proc (list (car rands)) (map-k proc (cdr rands) (append evald (list v)))))]
-        [define-k ()
-          (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))]
+        [define-k (var pass-to)
+          (apply-k pass-to
+            (begin (set-car! (cdr init-env) (append (cadr init-env) (list var)))
+                   (set-car! (cddr init-env) (append (caddr init-env) (list (box v))))))]
         [if-k (thn els env pass-to)
           (if v
               (eval-exp thn env pass-to)
@@ -195,4 +202,6 @@
           (extend-env *prim-proc-names* v (empty-env))]
         [reset-env-k ()
           (set! init-env (extend-env *prim-proc-names* v (empty-env)))]
+        [extended-env-k (syms env)
+          (extended-env-record syms v env)]
         [else v])))

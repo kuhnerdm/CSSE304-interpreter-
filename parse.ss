@@ -39,7 +39,7 @@
       [(symbol? datum) (var-exp datum)]
       [(number? datum) (lit-exp datum)]
       [(string? datum) (lit-exp datum)]
-      [(is-quoted-list? datum) (lit-exp (map parse-exp (cadr datum) (ident-k)))]
+      [(is-quoted-list? datum) (lit-exp (cadr datum))]
       [(is-quoted-vector? datum) (lit-exp (cadr datum))]
       [(is-quoted-symbol? datum) (lit-exp (cadr datum))]
       [(boolean? datum) (lit-exp datum)]
@@ -161,7 +161,7 @@
                  (syntax-expand (cadr (get-rator-rands (car rands))))
                  (syntax-expand (app-exp (var-exp 'cond) (cdr rands))))])]
           [(equal? rator (var-exp 'begin))
-           (app-exp (lambda-exp-list '() (map syntax-expand rands (ident-k))) '())]
+           (syntax-expand (app-exp (lambda-exp-list '() (map syntax-expand rands (ident-k))) '()))]
           [(equal? rator (var-exp 'and))
            (if (null? (cdr rands))
                (app-exp (lambda-exp-list '(intpTempVal) (list (if-exp (var-exp 'intpTempVal) (var-exp 'intpTempVal) (lit-exp #f)))) (list (syntax-expand (car rands))))

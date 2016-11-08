@@ -6,7 +6,8 @@
 
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms (map box vals (ident-k)) env)))
+    ;;(extended-env-record syms (map box vals (ident-k)) env)))
+    (map box vals (extended-env-k syms env))))
 
 (define deref
   (lambda (x)

@@ -34,8 +34,7 @@
       [set!-exp (var val)
         (apply-k k (eval-exp val env (set!-k env var)))]
       [define-exp (var val)
-        (set-car! (cdr init-env) (append (cadr init-env) (list var)))
-        (eval-exp val env (define-k))]
+        (eval-exp val env (define-k var k))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -51,7 +50,7 @@
 
 (define eval-bodies
   (lambda (bodies env k)
-    (apply-k k (eval-rands bodies '() env (car-reverse-k)))))
+    (eval-rands bodies '() env (car-reverse-k k))))
 
 ;;  Apply a procedure to its arguments.
 ;;  At this point, we only have primitive procedures.  
@@ -135,7 +134,7 @@
       [(list->vector) (apply-k k (apply list->vector args))]
       [(list?) (apply-k k (apply list? args))]
       [(pair?) (apply-k k (apply pair? args))]
-      [(procedure?) (apply-k k (apply procedure? args))]
+      [(procedure?) (apply-k k (apply proc-val? args))]
       [(vector->list) (apply-k k (apply vector->list args))]
       [(vector) (apply-k k (apply vector args))]
       [(make-vector) (apply-k k (apply make-vector args))]
